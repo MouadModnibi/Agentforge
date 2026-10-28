@@ -32,8 +32,11 @@ async function main() {
     snapshot.exec(
       "DELETE FROM workflow_worker_health; DELETE FROM worker_locks;",
     );
+    // Turso's SQLite upload protocol requires WAL mode in the file header.
+    snapshot.pragma("journal_mode=WAL");
     snapshot.pragma("wal_checkpoint(TRUNCATE)");
-    snapshot.pragma("journal_mode=DELETE");
+    if (snapshot.pragma("journal_mode", { simple: true }) !== "wal")
+      throw new Error("Cloud snapshot must use WAL journal mode.");
     const integrity = snapshot.pragma("integrity_check", { simple: true });
     if (integrity !== "ok") throw new Error("Snapshot integrity check failed.");
   } finally {
