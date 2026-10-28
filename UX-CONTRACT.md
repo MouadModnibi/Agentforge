@@ -46,6 +46,8 @@ Session expiry remains server-enforced; protected APIs never fall back to anothe
 
 ## Migration and verification
 
+Text execution output: show readable text rather than JSON string escapes. The same WorkflowTextOutput owner in the final result and node inspector offers a local A4 PDF download. Edits are explicitly for the current PDF preview and never mutate the saved execution. Keep secret redaction intact; downloads containing [REDACTED] require correction first. Empty/oversized/unsupported text has actionable errors; structured JSON keeps its existing inspector. The PDF generation runs locally in the browser with no extra API/model request or uploaded document.
+
 Deployment runtime: serverless mode labels execution as Cloud jobs rather than asking the user to start a permanent worker. Telegram and manual runs wake a bounded job; Gmail depends on authenticated scheduler requests. A recent scheduler tick indicates arrival only, not successful integration processing. Execution history remains authoritative; failed/interrupted runs still require explicit retry review. Worker mode retains its existing connected/offline guidance.
 
 Scope: shared chrome/tokens, workflow collection/editor, agents collection/editor/playground, credentials, auth and settings. Keep routes/APIs unchanged. Existing global geometry stays where useful; new identity replaces motion layer and collection layout. Run typecheck, lint, test, build, designmd lint and strict premium audit. Browser evidence is recorded in docs/design-review.md, with desktop/mobile, sibling screens, keyboard, error/no-results and overlay checks. Existing tests/accounts.test.ts and workflowApi.test.ts prove data boundaries; visual checks do not replace them.

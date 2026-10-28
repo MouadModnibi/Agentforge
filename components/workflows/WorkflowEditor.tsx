@@ -74,6 +74,7 @@ import {
   workflowFetch,
 } from "@/lib/hooks/useWorkflows";
 import { useAgents } from "@/lib/hooks/useAgents";
+import { WorkflowTextOutput } from "./WorkflowTextOutput";
 const nodeTypes = { workflow: WorkflowNode };
 const edgeTypes = { workflow: WorkflowEdge };
 function canvasNodes(graph: WorkflowGraph): CanvasNode[] {
@@ -796,7 +797,16 @@ function Editor({ initial }: { initial: Workflow }) {
                           </button>
                         ))}
                       </div>
-                      <pre>{JSON.stringify(run.output, null, 2)}</pre>
+                      {typeof run.output === "string" &&
+                      run.status === "succeeded" ? (
+                        <WorkflowTextOutput
+                          key={`${run.id}:final`}
+                          value={run.output}
+                          filename={`m4m-${run.id.slice(0, 8)}`}
+                        />
+                      ) : (
+                        <pre>{JSON.stringify(run.output, null, 2)}</pre>
+                      )}
                     </>
                   ) : (
                     <div className="wf-run-placeholder">
@@ -996,15 +1006,33 @@ function Editor({ initial }: { initial: Workflow }) {
                         {["input", "output", "error", "usage"].map((key) => (
                           <details key={key} open={key === "output"}>
                             <summary>{key}</summary>
-                            <pre>
-                              {JSON.stringify(
-                                run.steps.find((s) => s.nodeId === selected)?.[
-                                  key as "input" | "output" | "error" | "usage"
-                                ],
-                                null,
-                                2,
-                              ) ?? "Not available"}
-                            </pre>
+                            {key === "output" &&
+                            run.steps.find((s) => s.nodeId === selected)
+                              ?.status === "succeeded" &&
+                            typeof run.steps.find((s) => s.nodeId === selected)
+                              ?.output === "string" ? (
+                              <WorkflowTextOutput
+                                key={`${run.id}:${selected}`}
+                                value={
+                                  run.steps.find((s) => s.nodeId === selected)!
+                                    .output as string
+                                }
+                                filename={`m4m-${run.id.slice(0, 8)}-${selected}`}
+                              />
+                            ) : (
+                              <pre>
+                                {JSON.stringify(
+                                  run.steps.find(
+                                    (s) => s.nodeId === selected,
+                                  )?.[
+                                    key as
+                                      "input" | "output" | "error" | "usage"
+                                  ],
+                                  null,
+                                  2,
+                                ) ?? "Not available"}
+                              </pre>
+                            )}
                           </details>
                         ))}
                       </div>
