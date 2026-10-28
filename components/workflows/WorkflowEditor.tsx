@@ -75,6 +75,11 @@ import {
 } from "@/lib/hooks/useWorkflows";
 import { useAgents } from "@/lib/hooks/useAgents";
 import { WorkflowTextOutput } from "./WorkflowTextOutput";
+import {
+  defaultRunInputMode,
+  parseRunInput,
+  type RunInputMode,
+} from "@/lib/workflows/run-input";
 const nodeTypes = { workflow: WorkflowNode };
 const edgeTypes = { workflow: WorkflowEdge };
 function canvasNodes(graph: WorkflowGraph): CanvasNode[] {
@@ -139,6 +144,12 @@ function Editor({ initial }: { initial: Workflow }) {
       Array<{ revision: number; graph: WorkflowGraph; createdAt: number }>
     >([]),
     [webhookKey, setWebhookKey] = useState<string | null>(null);
+  const [inputMode, setInputMode] = useState<RunInputMode>(() =>
+    defaultRunInputMode(initial.graph),
+  );
+  const [plainInput, setPlainInput] = useState("");
+  const [inputError, setInputError] = useState("");
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [showTools, setShowTools] = useState(
     () => typeof window === "undefined" || window.innerWidth > 760,
   );
@@ -343,10 +354,21 @@ function Editor({ initial }: { initial: Workflow }) {
     });
   }
   async function execute() {
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = parseRunInput(
+        inputMode === "text" ? plainInput : input,
+        inputMode,
+      );
+    } catch (error) {
+      setInputError(
+        error instanceof Error ? error.message : "Check your input.",
+      );
+      inputRef.current?.focus();
+      throw error;
+    }
+    setInputError("");
     await save();
-    const parsed = JSON.parse(input);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
-      throw new Error("Run input must be a JSON object");
     const result = await workflowFetch<WorkflowRun>(
       `/api/workflows/${workflow.id}/run`,
       "POST",
@@ -1061,18 +1083,73 @@ function Editor({ initial }: { initial: Workflow }) {
               {panel === "run" && (
                 <>
                   <p className="text-sm text-muted-foreground mb-5">
-                    Test your workflow with a JSON input. Your current draft
-                    will be saved before execution.
+                    Paste text directly, or use JSON for multiple input fields.
+                    Your current workflow draft will be saved before execution.
                   </p>
+                  <div
+                    role="group"
+                    aria-label="Input format"
+                    className="flex gap-2 mb-4"
+                  >
+                    {(["text", "json"] as const).map((mode) => (
+                      <Button
+                        key={mode}
+                        size="sm"
+                        variant={inputMode === mode ? "outline" : "ghost"}
+                        aria-pressed={inputMode === mode}
+                        disabled={busy}
+                        onClick={() => {
+                          setInputMode(mode);
+                          setInputError("");
+                        }}
+                      >
+                        {mode === "text" ? "Plain text" : "JSON"}
+                      </Button>
+                    ))}
+                  </div>
                   <label className="wf-field">
-                    <span>Input data</span>
+                    <span>
+                      {inputMode === "text"
+                        ? "Job description or message"
+                        : "Input data (JSON)"}
+                    </span>
                     <Textarea
+                      ref={inputRef}
                       rows={12}
-                      className="wf-json"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
+                      className={inputMode === "json" ? "wf-json" : "min-h-64"}
+                      placeholder={
+                        inputMode === "text"
+                          ? "Paste the full offer here. Paragraphs, bullet points and quotes are supported."
+                          : undefined
+                      }
+                      aria-invalid={!!inputError}
+                      aria-describedby={`workflow-input-help${inputError ? " workflow-input-error" : ""}`}
+                      disabled={busy}
+                      value={inputMode === "text" ? plainInput : input}
+                      onChange={(e) => {
+                        if (inputMode === "text") setPlainInput(e.target.value);
+                        else setInput(e.target.value);
+                        setInputError("");
+                      }}
                     />
                   </label>
+                  <p
+                    id="workflow-input-help"
+                    className="text-xs text-muted-foreground mb-4"
+                  >
+                    {inputMode === "text"
+                      ? "Sent as the text field automatically. No JSON formatting needed. Use JSON if the workflow also needs fields such as chatId or priority."
+                      : "Use a JSON object with the fields your workflow expects. Your text and JSON drafts are kept separately when switching."}
+                  </p>
+                  {inputError && (
+                    <p
+                      id="workflow-input-error"
+                      role="alert"
+                      className="wf-error"
+                    >
+                      {inputError}
+                    </p>
+                  )}
                   {overview?.runtime !== "serverless" &&
                     !overview?.workerOnline && (
                       <p className="wf-notice">
@@ -1082,7 +1159,11 @@ function Editor({ initial }: { initial: Workflow }) {
                     )}
                   <Button
                     className="w-full"
-                    disabled={busy || errors.length > 0}
+                    disabled={
+                      busy ||
+                      errors.length > 0 ||
+                      (inputMode === "text" && !plainInput.trim())
+                    }
                     onClick={() => perform(execute)}
                   >
                     {busy ? <Loader2 className="animate-spin" /> : <Play />}
