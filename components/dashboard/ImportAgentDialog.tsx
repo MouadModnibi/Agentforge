@@ -2,13 +2,26 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Upload } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateAgent } from "@/lib/hooks/useAgents";
-import { toast } from "sonner";
+import { CreateAgentSchema } from "@/lib/schemas/agent";
 
-export function ImportAgentDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ImportAgentDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const [json, setJson] = useState("");
   const [error, setError] = useState("");
   const createAgent = useCreateAgent();
@@ -24,19 +37,34 @@ export function ImportAgentDialog({ open, onClose }: { open: boolean; onClose: (
       return;
     }
 
-    if (!parsed.name || typeof parsed.name !== "string") {
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed) ||
+      !parsed.name ||
+      typeof parsed.name !== "string"
+    ) {
       setError("Missing required field: name");
       return;
     }
 
     try {
-      const agent = await createAgent.mutateAsync({
+      const validated = CreateAgentSchema.safeParse({
         name: (parsed.name as string) + " (imported)",
         description: (parsed.description as string) || "",
         status: "draft",
         config: (parsed.config as Record<string, unknown>) || {},
         customTool: (parsed.customTool as null) || null,
       });
+      if (!validated.success) {
+        setError(
+          validated.error.issues
+            .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+            .join("; "),
+        );
+        return;
+      }
+      const agent = await createAgent.mutateAsync(validated.data);
       onClose();
       setJson("");
       router.push(`/agents/${agent.id}/edit`);
@@ -46,12 +74,18 @@ export function ImportAgentDialog({ open, onClose }: { open: boolean; onClose: (
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Import agent from JSON</DialogTitle>
           <DialogDescription>
-            Paste the exported agent JSON below. Secrets and API keys are not included in exports.
+            Paste the exported agent JSON below. Secrets and API keys are not
+            included in exports.
           </DialogDescription>
         </DialogHeader>
         <Textarea
@@ -62,8 +96,13 @@ export function ImportAgentDialog({ open, onClose }: { open: boolean; onClose: (
         />
         {error && <p className="text-sm text-destructive">{error}</p>}
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleImport} disabled={!json.trim() || createAgent.isPending}>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleImport}
+            disabled={!json.trim() || createAgent.isPending}
+          >
             <Upload className="w-4 h-4" />
             Import
           </Button>

@@ -1,7 +1,17 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { SandboxError, ServerSandbox } from "@/lib/sandbox/customToolRunner";
 
 describe("ServerSandbox", () => {
+  const nativeSandbox = new ServerSandbox();
+  it.skipIf(!nativeSandbox.isAvailable())("copies asynchronous results out of a real isolate", async () => {
+    await expect(nativeSandbox.run("async function run(args) { return { doubled: await Promise.resolve(args.n * 2), process: typeof process, fetch: typeof fetch }; }", {n: 4}, {timeoutMs: 1000})).resolves.toEqual({doubled: 8, process: "undefined", fetch: "undefined"});
+  });
+  it.skipIf(!nativeSandbox.isAvailable())("terminates an infinite loop", async () => {
+    await expect(nativeSandbox.run("function run() { while(true) {} }", {}, {timeoutMs: 100})).rejects.toMatchObject({code: "TIMEOUT"});
+  });
+  it.skipIf(!nativeSandbox.isAvailable())("bounds a promise that never settles", async () => {
+    await expect(nativeSandbox.run("async function run() { await new Promise(() => {}); }", {}, {timeoutMs: 100})).rejects.toMatchObject({code: "TIMEOUT"});
+  });
   it("throws SandboxError with UNAVAILABLE code when ivm missing", async () => {
     const sandbox = new ServerSandbox();
     // isolated-vm is not installed in the test environment — sandbox should be unavailable

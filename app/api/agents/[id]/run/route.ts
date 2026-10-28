@@ -1,3 +1,5 @@
+import { accountModelKey } from "@/lib/security/accounts";
+import { withAgentKey } from "@/lib/security/routeAuth";
 import { NextRequest, NextResponse } from "next/server";
 import { agentsRepository } from "@/lib/repositories/agents";
 import { runsRepository } from "@/lib/repositories/runs";
@@ -6,17 +8,27 @@ import { runAgent, setServerSandbox } from "@/lib/runtime/runAgent";
 import { getServerSandbox } from "@/lib/sandbox/customToolRunner";
 import { checkRateLimit } from "@/lib/security/rateLimit";
 import { hashApiKey } from "@/lib/security/secrets";
-
 // Register sandbox once per server process
 setServerSandbox(getServerSandbox());
-
-function errorResponse(code: string, message: string, status: number, details?: unknown) {
+function errorResponse(
+  code: string,
+  message: string,
+  status: number,
+  details?: unknown,
+) {
   return NextResponse.json({ error: { code, message, details } }, { status });
 }
-
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAgentKey(async function POST(
+  req: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{
+      id: string;
+    }>;
+  },
+) {
   const { id } = await params;
-
   // Rate limiting
   const ip = req.headers.get("x-forwarded-for") || "unknown";
   const rateLimitKey = `${ip}:${id}`;
@@ -25,42 +37,48 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return errorResponse(
       "RATE_LIMITED",
       `Too many requests. Retry in ${Math.ceil(rateLimit.retryAfterMs / 1000)}s`,
-      429
+      429,
     );
   }
-
   try {
     const agent = await agentsRepository.findById(id);
     if (!agent) return errorResponse("NOT_FOUND", "Agent not found", 404);
-
+    if (process.env.NODE_ENV === "production" && !agent.apiKeyHash) {
+      return errorResponse(
+        "UNAUTHORIZED",
+        "Configure an agent API key before using the public run API in production",
+        401,
+      );
+    }
     // Check API key if set
     if (agent.apiKeyHash) {
       const authHeader = req.headers.get("authorization");
-      const providedKey = authHeader?.replace("Bearer ", "") || req.nextUrl.searchParams.get("apiKey");
-
+      const providedKey =
+        authHeader?.replace("Bearer ", "") ||
+        req.nextUrl.searchParams.get("apiKey");
       if (!providedKey || hashApiKey(providedKey) !== agent.apiKeyHash) {
         return errorResponse("UNAUTHORIZED", "Invalid or missing API key", 401);
       }
     }
-
     const body = await req.json();
     const parsed = RunRequestSchema.safeParse(body);
     if (!parsed.success) {
-      return errorResponse("VALIDATION_ERROR", "Invalid request", 400, parsed.error.flatten());
-    }
-
-    // Check API key is configured
-    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
       return errorResponse(
-        "MISSING_API_KEY",
-        "GOOGLE_GENERATIVE_AI_API_KEY is not configured on the server",
-        503
+        "VALIDATION_ERROR",
+        "Invalid request",
+        400,
+        parsed.error.flatten(),
       );
     }
-
+    // Check API key is configured
+    if (!(await accountModelKey()))
+      return errorResponse(
+        "MISSING_API_KEY",
+        "Add your Gemini API key in Account settings.",
+        503,
+      );
     // Fetch resources
     const resources = await agentsRepository.getResources(id);
-
     const result = await runAgent({
       agentId: id,
       config: agent.config,
@@ -76,7 +94,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       externalApis: agent.externalApis,
       source: "api",
     });
-
     // Persist run
     await runsRepository.create({
       agentId: id,
@@ -90,7 +107,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       durationMs: result.durationMs,
       error: result.error,
     });
-
     return NextResponse.json({
       output: result.output,
       valid: result.valid,
@@ -102,4 +118,4 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const message = err instanceof Error ? err.message : "Run failed";
     return errorResponse("RUN_FAILED", message, 500);
   }
-}
+});

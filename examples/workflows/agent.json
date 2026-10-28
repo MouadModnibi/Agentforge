@@ -1,0 +1,77 @@
+{
+  "name": "Agent-powered automation",
+  "description": "Turn an existing m4m agent into a reusable flow.",
+  "graph": {
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "manual",
+        "label": "Receive a request",
+        "position": {
+          "x": 40,
+          "y": 180
+        },
+        "config": {},
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "agent",
+        "kind": "agent",
+        "label": "Process with my agent",
+        "position": {
+          "x": 340,
+          "y": 180
+        },
+        "config": {
+          "agentId": "",
+          "input": {
+            "text": "{{input.text}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "result",
+        "kind": "transform",
+        "label": "Package the result",
+        "position": {
+          "x": 650,
+          "y": 180
+        },
+        "config": {
+          "values": {
+            "result": "{{nodes.agent}}",
+            "source": "m4m"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      }
+    ],
+    "edges": [
+      {
+        "id": "s-a",
+        "source": "start",
+        "target": "agent",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "a-r",
+        "source": "agent",
+        "target": "result",
+        "sourceHandle": "out"
+      }
+    ]
+  }
+}

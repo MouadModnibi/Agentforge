@@ -1,8 +1,18 @@
 {
-  "name": "agentforge",
+  "name": "m4m",
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "db:export-cloud": "tsx scripts/export-cloud-database.ts",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "accounts:claim-legacy": "tsx scripts/accounts-claim-legacy.ts",
+    "examples:export": "tsx scripts/export-workflows.ts",
+    "docs:api": "tsx scripts/generate-api-docs.ts",
+    "smoke": "tsx scripts/workflow-smoke.ts",
+    "smoke:docker": "node scripts/docker-smoke.cjs",
+    "smoke:ai": "tsx scripts/agent-workflow-smoke.ts",
+    "worker": "tsx scripts/workflow-worker.ts",
+    "typecheck": "tsc --noEmit",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -13,7 +23,11 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.85",
+    "@fontsource-variable/ibm-plex-sans": "^5.3.0",
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@hookform/resolvers": "^5.9.1",
+    "@libsql/client": "^0.18.0",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-accordion": "^1.2.20",
     "@radix-ui/react-alert-dialog": "^1.1.23",
@@ -31,26 +45,33 @@
     "@radix-ui/react-tooltip": "^1.2.16",
     "@tanstack/react-query": "^5.104.0",
     "@tanstack/react-query-devtools": "^5.104.0",
+    "@xyflow/react": "^12.12.0",
     "ai": "^7.0.122",
     "better-sqlite3": "^13.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "drizzle-orm": "^0.45.3",
+    "imapflow": "^2.2.1",
     "lucide-react": "^1.48.0",
+    "mailparser": "^3.9.33",
     "next": "16.3.7",
+    "nodemailer": "^10.0.13",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "^7.89.0",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
+    "tsx": "^4.23.15",
     "uuid": "^14.0.2",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^9.6.0",
+    "@types/mailparser": "^3.9.0",
     "@types/node": "^22.20.4",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
@@ -63,5 +84,11 @@
     "typescript": "^5",
     "vite": "^8.3.1",
     "vitest": "^5.0.2"
+  },
+  "overrides": {
+    "dompurify": "3.4.16"
+  },
+  "optionalDependencies": {
+    "isolated-vm": "^7.0.1"
   }
 }

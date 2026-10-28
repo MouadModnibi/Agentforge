@@ -9,6 +9,9 @@ import { buildExternalApiTools, type ToolDefinition } from "./toolRegistry";
 import { withRateLimitHandling } from "./withRateLimitHandling";
 import { enqueueLLMCall } from "./llmQueue";
 import type { AgentConfig, ExternalApi, CustomTool } from "@/lib/schemas/agent";
+import { decryptSecret } from "@/lib/security/secrets";
+import { redactSecrets } from "@/lib/security/redaction";
+import { validateInput } from "./validateInput";
 
 export interface Resource {
   id: string;
@@ -19,6 +22,7 @@ export interface Resource {
 }
 
 export interface RunAgentOptions {
+  signal?: AbortSignal;
   agentId: string;
   config: AgentConfig;
   input: Record<string, unknown>;
@@ -103,15 +107,22 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
   const startTime = Date.now();
   const trace: TraceStep[] = [];
   let llmRequestCount = 0;
-  let totalUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+  const totalUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
 
-  const { config, input, resources, externalApis = [], customTool } = opts;
+  const { config, input: rawInput, resources, externalApis = [], customTool } = opts;
+  const secrets = externalApis.flatMap(api => Object.values(api.headers).flatMap(value => {
+    try { return value.startsWith("enc:") ? [decryptSecret(value.slice(4))] : value.startsWith("raw:") ? [value.slice(4)] : []; } catch { return []; }
+  }));
 
   // Enforce timeout
   const abortController = new AbortController();
+  const onAbort = () => abortController.abort(opts.signal?.reason);
+  if (opts.signal?.aborted) onAbort();
+  opts.signal?.addEventListener("abort", onAbort, { once: true });
   const timeoutHandle = setTimeout(() => abortController.abort(), config.timeoutMs);
 
   try {
+    const input = validateInput(config.inputParams, rawInput);
     // Build prompt
     const { systemPrompt, userMessage } = buildPrompt({ config, input, resources });
 
@@ -121,7 +132,7 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
       timestamp: Date.now(),
     });
 
-    const provider = getProvider();
+    const provider = await getProvider();
     const modelDef = getModel(config.model);
     const model = provider.getModel(config.model);
 
@@ -277,14 +288,14 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
       timestamp: Date.now(),
     });
 
-    return {
+    return redactSecrets({
       output: validationResult.parsed ?? rawOutput,
       valid: validationResult.valid,
       trace,
       usage: totalUsage,
       llmRequestCount,
       durationMs: Date.now() - startTime,
-    };
+    }, secrets);
 
   } catch (err) {
     const isTimeout = abortController.signal.aborted;
@@ -293,7 +304,7 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
       : err instanceof Error ? err.message : String(err);
 
     trace.push({ type: "output", data: { error: message }, timestamp: Date.now() });
-    return {
+    return redactSecrets({
       output: null,
       valid: false,
       trace,
@@ -301,8 +312,9 @@ export async function runAgent(opts: RunAgentOptions): Promise<RunAgentResult> {
       llmRequestCount,
       durationMs: Date.now() - startTime,
       error: message,
-    };
+    }, secrets);
   } finally {
     clearTimeout(timeoutHandle);
+    opts.signal?.removeEventListener("abort", onAbort);
   }
 }

@@ -1,0 +1,21 @@
+{
+  "profile": "product-admin",
+  "canonicalMap": "UX-CONTRACT.md",
+  "sourceRoots": ["app", "components"],
+  "requiredCapabilities": [
+    "Select/Listbox",
+    "Form",
+    "Scrollbar",
+    "Toast",
+    "CRUD"
+  ],
+  "ownership": { "Select/Listbox": "native" },
+  "ownershipNotes": "The native branch is deliberate for existing node enums and credential integration selectors, where OS popup geometry is accepted. Radix Select remains canonical for authored popups; both are recorded in UX-CONTRACT.md.",
+  "commands": {
+    "typecheck": "npm run typecheck",
+    "lint": "npm run lint",
+    "test": "npm test",
+    "build": "npm run build"
+  },
+  "evidence": { "browser": "docs/design-review.md" }
+}

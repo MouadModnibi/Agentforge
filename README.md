@@ -1,245 +1,123 @@
-# AgentForge
+# m4m
 
-A production-quality no-code/low-code web app to build, configure, test, and deploy modular AI agents powered by Google Gemini. Think a simplified Flowise/Langflow — but leaner, faster, and free to run locally.
+m4m builds reusable Gemini agents and connects them into visual automations. The workflow editor uses **React Flow (`@xyflow/react`)** with draggable nodes, connections, zoom, a minimap, configuration panels, and execution highlighting. A separate worker executes durable jobs; this is a working backend, not just a canvas.
 
----
+For **free personal Vercel + Turso hosting**, follow [the serverless deployment guide](docs/free-deployment.md). Telegram runs on incoming messages; an authenticated external scheduler checks Gmail. A dedicated worker remains optional. Registration/login are required locally too. Only unclaimed legacy records need the operator claim command; already-owned accounts survive a database import with their existing login.
 
 ## Features
 
-- **Agent editor** — tabbed form with prompt, typed inputs, JSON output schema, resources, external APIs, custom JS tools, and versioning
-- **Playground** — run agents interactively, see raw output, validation results, execution trace, and token metrics
-- **Public run API** — `POST /api/agents/:id/run` with optional API key protection
-- **Streaming-ready** — Gemini response streaming (text format)
-- **Free-tier resilient** — exponential backoff on 429s, in-process RPM queue, clear quota error messages
-- **Dark mode** — system default, toggle, FOUC-free
-- **Command palette** — Cmd/Ctrl+K to navigate anywhere
-- **Version history** — every save creates a snapshot; restore any version in one click
-- **Security** — SSRF guard on all outbound calls, AES-256-GCM secret encryption, sandboxed custom code execution
+- Build agents with prompts, typed inputs, resources, API tools, custom JavaScript, output validation, playground, versions, and per-agent API keys.
+- Create, import/export, duplicate, save, restore, activate, and run workflows. Reference previous outputs and inspect each step's input/output/error.
+- Use 15 node types: manual/webhook/Telegram/email/X triggers; existing agents/Gemini prompts; conditions/routers/transforms; HTTP/custom tools/Telegram/SMTP/X actions.
+- Run asynchronously, view history, cancel supported operations, and explicitly retry failures. Active triggers use pinned versions; edits stay in drafts.
+- Encrypt integration credentials, isolate accounts with password login, and optionally track execution metrics in MLflow.
 
----
+Telegram, email (IMAP + SMTP), and X are the three initial integrations. They cover messaging, email, and social automation with real APIs. Gmail may use IMAP/SMTP app passwords where allowed; Gmail OAuth is not implemented. X needs appropriate provider access and permissions.
 
-## Quick start
+## Local setup
 
-### 1. Get a Gemini API key
+Use Node.js 24 LTS and npm. Native dependencies may require Python and a C++ build toolchain when no prebuilt binary exists. Docker includes that toolchain.
 
-1. Go to [Google AI Studio](https://aistudio.google.com/)
-2. Click **Get API key** → **Create API key**
-3. Copy the key (starts with `AIza…`)
-
-Free tier limits are approximately **15 RPM / 1 500 RPD** for Flash models. To raise limits, enable billing in your Google Cloud project — see [AI Studio pricing](https://ai.google.dev/pricing).
-
-### 2. Configure environment
-
-```bash
-cp .env.example .env.local
+```powershell
+npm ci
+Copy-Item .env.example .env.local
 ```
 
-Edit `.env.local`:
+Edit `.env.local`. Offline workflows need no API key; AI nodes need a Gemini key saved in **Account settings** and a model available to your Google project. Generate a stable `APP_SECRET` with:
 
-```env
-# Required
-GOOGLE_GENERATIVE_AI_API_KEY=AIzaSy...your_key_here
-
-# Optional — defaults shown
-GEMINI_DEFAULT_MODEL=gemini-2.0-flash
-LLM_MAX_RPM=8
-APP_SECRET=change-me-to-a-random-32-char-hex-string
-```
-
-Generate a secure `APP_SECRET`:
-
-```bash
+```powershell
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 3. Install and run
+Set APP_URL to the exact browser origin. Register at `/register` to create your private workspace. Start these in **two terminals**:
 
-```bash
-npm install
+```powershell
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-### 4. Seed starter agents (optional)
-
-```bash
-npm run db:seed
+```powershell
+npm run worker
 ```
 
-Creates three sample agents: Summarizer, Sentiment Classifier, Data Extractor.
+Open [Workflows](http://localhost:3000/workflows), click **Try working example**, then **Run workflow**. `priority: "high"` takes the urgent branch; other values take the standard branch. Runs remain queued when the worker is stopped. Original agents are at `/`; credentials are at `/credentials`.
 
----
+Optional starter agents: set `SEED_EMAIL` to your registered account, then run `npm run db:seed`. Importable templates are in [examples/workflows](examples/workflows); regenerate with `npm run examples:export`.
 
-## Architecture
+## Environment
 
-```
-agentforge/
-├── app/
-│   ├── page.tsx                     # Dashboard
-│   ├── agents/new, [id]/edit        # Agent editor
-│   ├── agents/[id]/playground       # Playground
-│   └── api/
-│       ├── agents/                  # CRUD, run, versions, resources, API key
-│       ├── playground/run           # Playground execution (no auth)
-│       ├── tools/test               # Custom tool sandbox test
-│       └── openapi/import           # OpenAPI 3.x → ExternalApi[]
-├── components/
-│   ├── dashboard/                   # Table, empty state, import dialog
-│   ├── editor/                      # Tabbed editor, version drawer, API key panel
-│   │   └── tabs/                    # 8 tabs: General, Prompt, Input, Output,
-│   │                                #   Resources, ExternalAPIs, CustomTool, Advanced
-│   ├── playground/                  # InputForm, OutputPanel, TracePanel, MetricsPanel, RunHistory
-│   ├── CommandPalette.tsx           # Cmd+K palette
-│   └── ui/                          # shadcn components + ThemeToggle
-└── lib/
-    ├── db/                          # Drizzle schema, SQLite client, seed
-    ├── repositories/                # agents.ts, runs.ts — data access layer
-    ├── schemas/                     # Zod schemas (single source of truth)
-    ├── runtime/
-    │   ├── runAgent.ts              # Core agentic loop
-    │   ├── buildPrompt.ts           # Prompt builder + variable interpolation
-    │   ├── outputValidator.ts       # JSON schema validation + repair prompts
-    │   ├── toolRegistry.ts          # ExternalApi → Vercel AI SDK tools
-    │   ├── resourceInjector.ts      # Resources → labeled context blocks
-    │   ├── llmQueue.ts              # Global RPM limiter
-    │   └── withRateLimitHandling.ts # 429 retry + exponential backoff
-    ├── providers/
-    │   ├── google.ts                # @ai-sdk/google wrapper
-    │   ├── models.ts                # Model list with capability flags
-    │   └── index.ts                 # LLMProvider abstraction
-    ├── sandbox/
-    │   └── customToolRunner.ts      # ServerSandbox (isolated-vm), BrowserWorkerSandbox
-    └── security/
-        ├── ssrfGuard.ts             # DNS-based SSRF protection
-        ├── secrets.ts               # AES-256-GCM encrypt/decrypt (server only)
-        ├── secrets-client.ts        # Browser-safe secret helpers
-        └── rateLimit.ts             # Token-bucket rate limiter
-```
-
-### Data model (SQLite via Drizzle ORM)
-
-| Table | Purpose |
+| Variable | Purpose |
 |---|---|
-| `agents` | Agent configs, status, API key hash, run count |
-| `agent_versions` | Snapshot on every save (restore any version) |
-| `resources` | Uploaded context files (.json/.txt/.md/.csv, 1 MB each) |
-| `runs` | Execution history with input, output, trace, usage |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Legacy migration key only; users save private keys in Account settings |
+| `GEMINI_DEFAULT_MODEL` | New agent model; example uses `gemini-3.8-flash` |
+| `LLM_MAX_RPM` | AI requests/minute/process; default 8, configure for your quota |
+| `APP_SECRET` | Stable encryption/signing secret, minimum 32 characters in production |
+| `ALLOW_REGISTRATION` | Set false to close new registrations |
+| `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Shared cloud database connection for Vercel and worker |
+| `APP_URL` | Allowed browser origin; default `http://localhost:3000` |
+| `DATABASE_PATH` | SQLite path; default `data/agentforge.db`; web/worker must match |
+| `TRIGGER_POLL_MS` | IMAP/X polling interval; default 60000 |
+| `WORKFLOW_TIMEOUT_MS` | Total run timeout; default 600000 |
+| `MLFLOW_TRACKING_URI`, `MLFLOW_TOKEN` | Optional tracking server and authentication |
 
-### Agent runtime flow
+Google documents the default model [here](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash). Availability and quotas depend on your project; check your provider dashboard.
 
+## Integrations
+
+Create credentials under **Credentials**; secret values are encrypted and never returned by the metadata API. Select the saved credential in each node.
+
+- **Telegram:** save a bot token and a separate webhook secret, activate a Telegram trigger, and register the public HTTPS endpoint with Telegram using the saved credential's webhook secret as `secret_token`. Incoming `update_id` values deduplicate events.
+- **Email:** save `user`, `password`, SMTP host/port (465 or 587), IMAP host/port (993), optional `from`. TLS is required. The first poll establishes a baseline; subsequent messages trigger jobs. Messages over 1 MB are skipped. Your provider may require an app password.
+- **X:** save an OAuth user `accessToken` with read/write permissions plus `userId` for mentions. The first poll establishes a baseline. Provider access/credits are supplied by you; polling may cost money.
+- **HTTP:** store private headers in HTTP credentials instead of graph JSON.
+
+Agent nodes reuse existing resources, tools, validation and traces. Custom-tool nodes execute the selected agent's code in isolated V8 with memory/time bounds and no network, filesystem or Node APIs. Use HTTP nodes for networking. If optional `isolated-vm` fails to install, custom tools fail clearly while other nodes remain available.
+
+See [API examples](docs/api-examples.md) for webhook registration and execution commands.
+
+## Docker and production
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+# Edit APP_SECRET, APP_URL and provider settings.
+docker compose --env-file .env.docker up --build -d
+docker compose --env-file .env.docker ps
+docker compose --env-file .env.docker logs -f worker
 ```
-Input → validate → buildPrompt → [tool loop, maxIterations] → validate output
-  → [repair loop, repairRetries] → persist run → return { output, valid, trace, usage }
-```
 
-1. System prompt + `{{variable}}` interpolation
-2. Resources injected as labeled code blocks
-3. Output format instructions appended
-4. Tools built from ExternalAPIs + optional custom JS tool
-5. `generateText` with Vercel AI SDK (`maxSteps = maxIterations`)
-6. If model doesn't support tools + JSON mode together: extra formatting pass
-7. JSON schema validation; on failure → repair prompt → retry up to `repairRetries` times
-8. Run persisted to `runs` table; `agents.runsCount` incremented
+Web and worker run as non-root processes with a shared persistent volume and health checks. Development dependencies are pruned from the runtime image. Compose binds locally; `HOST_PORT` controls the port and `APP_URL` must match. Use a TLS reverse proxy for public hosting/Telegram. Production requires HTTPS and account login and per-agent keys on the public agent run API.
 
----
+Optional MLflow: set `MLFLOW_TRACKING_URI=http://mlflow:5000` and start with `docker compose --env-file .env.docker --profile tracking up -d`. Only IDs, revision, duration, node counts and token metrics are sent. Tracking failure does not fail workflows. Pin the tracking image version/digest for production repeatability.
 
-## Security
+Without Docker: `npm run build`, then `npm start` and `npm run worker` under a supervisor using the same environment/database.
 
-### Custom tool sandbox
+Back up the database **with APP_SECRET**. Use SQLite's backup API, or stop both processes before copying the database/WAL. Changing the secret prevents decryption. Network-mounted/multi-host SQLite is unsupported; use one host and one trigger-polling worker.
 
-User-supplied JavaScript never runs in the main Node.js process:
+## Validation and delivery
 
-- **Browser (Playground/tool test panel)**: Web Worker created from a Blob URL. No DOM, no `require`, no `process`. Network via `fetch` (browser enforces same origin/CORS). 5 s hard timeout via inner `setTimeout` + outer `Worker.terminate()`.
-- **Server (public API runs)**: `isolated-vm` with 32 MB memory cap, no `require`, no `process`, no filesystem. Network only through an injected `ctx.fetch` that passes every URL through the SSRF guard. If `isolated-vm` is not installed, custom tools are **disabled with a clear message** — we never fall back to unsafe execution.
-
-Install server sandbox (optional, required for custom tools in API runs):
-
-```bash
-npm install isolated-vm
-```
-
-### SSRF guard
-
-Every outbound HTTP call (external API tools, custom tool `ctx.fetch`) goes through `lib/security/ssrfGuard.ts`:
-
-- Blocks non-HTTP/HTTPS schemes
-- Blocks metadata endpoints by hostname (`169.254.169.254`, `metadata.google.internal`, `100.100.100.200`)
-- Resolves DNS and blocks RFC1918 / loopback / link-local / ULA IPv6 ranges
-- Re-validates redirect targets
-- 10 s timeout + 1 MB response size limit
-
-### Secret storage
-
-External API header values marked as secrets are encrypted with AES-256-GCM using `APP_SECRET` before being written to the database. They are:
-
-- Never logged or included in traces
-- Excluded from agent JSON exports
-- Masked in all API responses (`****`)
-- Decrypted in-process only at tool execution time
-
-### API key auth
-
-Per-agent API keys (`af_…`) are hashed (SHA-256) before storage. The plaintext is shown exactly once on generation. Revoke at any time from the Advanced tab.
-
----
-
-## Environment variables
-
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `GOOGLE_GENERATIVE_AI_API_KEY` | ✅ | — | Google AI Studio key |
-| `GEMINI_DEFAULT_MODEL` | — | `gemini-2.0-flash` | Default model for new agents |
-| `LLM_MAX_RPM` | — | `8` | Global in-process LLM request rate cap |
-| `APP_SECRET` | ✅ prod | `default-dev-secret-…` | AES-256 key material for secret encryption |
-| `NODE_ENV` | — | `development` | Set to `production` for prod builds |
-
----
-
-## Available models
-
-| Model | Context | Notes |
-|---|---|---|
-| `gemini-2.0-flash` | 1M tokens | Fast, recommended default |
-| `gemini-2.0-flash-lite` | 1M tokens | Fastest, lightest |
-| `gemini-1.5-flash` | 1M tokens | Balanced |
-| `gemini-1.5-pro` | 2M tokens | Most capable |
-
-Add models to `lib/providers/models.ts`. Set `supportsToolsWithStructuredOutput: true` when the model can handle function calling and JSON schema output in the same request (triggers a more efficient runtime path).
-
----
-
-## Raising free-tier limits
-
-The Gemini free tier allows roughly 15 RPM and 1 500 requests/day for Flash models. To raise these limits:
-
-1. Open your project in [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable billing
-3. Navigate to **APIs & Services → Generative Language API → Quotas**
-4. Request a quota increase
-
-AgentForge will respect the new limits automatically — `LLM_MAX_RPM` controls the in-process throttle.
-
----
-
-## Running tests
-
-```bash
+```powershell
 npm test
+npm run typecheck
+npm run lint
+npm run build
+# With web and worker running; set BASE_URL, SMOKE_EMAIL and SMOKE_PASSWORD for a registered test account:
+npm run smoke
+# Optional: one short live Google call using your configured key:
+npm run smoke:ai
+# Against containers, reads URL/password from your ignored .env.docker:
+npm run smoke:docker
 ```
 
-Tests cover: `buildPrompt`, `outputValidator`, `withRateLimitHandling` (including simulated 429s), `ssrfGuard` (private IP blocking), `rateLimit` (token bucket), `sandbox` (SandboxError types), `runAgent` (happy path, repair loop, timeout, trace).
+The smoke test creates and removes temporary workflows, checking both branches, persistence, webhooks, deduplication and the live worker without contacting integration providers or spending AI credits.
 
----
+- [Architecture](docs/architecture.md)
+- [Frontend design and layout](docs/frontend.md)
+- [API reference](docs/api.md), [OpenAPI](docs/openapi.json), [API examples](docs/api-examples.md)
+- [Test matrix](docs/test-matrix.md), [validation report](docs/validation.md)
 
-## Roadmap
+## Limits and troubleshooting
 
-- **RAG** — plug in a `RAGStrategy` (already stubbed in `resourceInjector.ts`) to chunk and retrieve from large documents instead of injecting them wholesale
-- **Multi-agent chaining** — route outputs from one agent as inputs to another; visualise as a DAG
-- **Visual flow builder** — drag-and-drop node canvas (React Flow or similar)
-- **Auth / teams** — NextAuth.js with workspace-level agent access control
-- **Postgres** — swap the repository layer (`/lib/repositories/*`) for a Postgres-backed implementation; schema migrations via `drizzle-kit`
-- **Additional providers** — add `@ai-sdk/openai`, `@ai-sdk/anthropic` to `lib/providers/` with the same `LLMProvider` interface; expose a provider selector in the General tab
-- **Streaming output** — real-time token streaming in the Playground for text/markdown agents
-- **Evaluation suite** — run an agent against a dataset of inputs and score outputs
-- **Webhooks** — fire a POST to a configured URL after each successful run
+Graphs have one trigger, no cycles, up to 100 nodes/300 edges. Joins receive active incoming outputs keyed by node ID. Retry restarts the saved graph and may repeat external effects; cancellation cannot recall delivered messages. Expired worker leases become interrupted instead of automatically replaying. These semantics have automated tests.
+
+This initial automation platform is not full n8n parity. Teams/RBAC, OAuth linking, loops, scheduled triggers, streaming AI output, distributed queues and vector RAG remain future work. The existing JSON validator supports a subset of JSON Schema. The architecture document describes those boundaries.
+
+For "Cannot connect to API", verify the server's Google key/model access, DNS, network/proxy/firewall settings and provider status. For queued workflows start the worker and check `/api/health` for `workerOnline: true`. For silent polling triggers inspect the trigger-status API and saved credentials.

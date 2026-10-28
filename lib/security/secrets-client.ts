@@ -13,7 +13,8 @@
  */
 
 export function markSecretForEncryption(plaintext: string): string {
-  if (plaintext.startsWith("raw:") || plaintext.startsWith("enc:")) return plaintext;
+  if (plaintext.startsWith("raw:") || plaintext.startsWith("enc:"))
+    return plaintext;
   return `raw:${plaintext}`;
 }
 

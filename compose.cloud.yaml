@@ -1,0 +1,9 @@
+services:
+  worker:
+    build: .
+    init: true
+    restart: unless-stopped
+    env_file: .env.cloud
+    environment:
+      NODE_ENV: production
+    command: ["npm", "run", "worker"]

@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { InputForm } from "./InputForm";
 import { OutputPanel } from "./OutputPanel";
@@ -14,7 +13,11 @@ import { RunHistory } from "./RunHistory";
 import { TracePanel } from "./TracePanel";
 import { MetricsPanel } from "./MetricsPanel";
 import { useAgent } from "@/lib/hooks/useAgents";
-import { usePlaygroundRun, useRuns, type PlaygroundRunResult } from "@/lib/hooks/useRuns";
+import {
+  usePlaygroundRun,
+  useRuns,
+  type PlaygroundRunResult,
+} from "@/lib/hooks/useRuns";
 import { toast } from "sonner";
 
 export function PlaygroundPage({ agentId }: { agentId: string }) {
@@ -42,10 +45,15 @@ export function PlaygroundPage({ agentId }: { agentId: string }) {
   });
 
   async function handleRun() {
+    if (runMutation.isPending) return;
     let payload: Record<string, unknown>;
     if (useRawInput) {
       try {
         payload = JSON.parse(rawInput || "{}");
+        if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+          toast.error("Input must be a JSON object");
+          return;
+        }
       } catch {
         toast.error("Invalid JSON input");
         return;
@@ -84,19 +92,32 @@ export function PlaygroundPage({ agentId }: { agentId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="forge-detail-page bg-background flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b bg-background">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push("/")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => router.push("/")}
+            aria-label="Back to agents"
+          >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <span className="font-semibold">{agent.name}</span>
-          <Badge variant={agent.status === "active" ? "success" : "secondary"} className="text-xs">
+          <span className="text-sm font-medium">{agent.name}</span>
+          <Badge
+            variant={agent.status === "active" ? "success" : "secondary"}
+            className="text-xs"
+          >
             {agent.status}
           </Badge>
           <div className="flex-1" />
-          <Button variant="outline" size="sm" onClick={() => router.push(`/agents/${agentId}/edit`)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/agents/${agentId}/edit`)}
+          >
             <Edit className="w-3.5 h-3.5" />
             Edit
           </Button>
@@ -105,28 +126,55 @@ export function PlaygroundPage({ agentId }: { agentId: string }) {
             onClick={handleRun}
             disabled={runMutation.isPending}
           >
-            {runMutation.isPending
-              ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Running…</>
-              : <><Play className="w-3.5 h-3.5" />Run <kbd className="ml-1 text-xs opacity-60">⌘↵</kbd></>
-            }
+            {runMutation.isPending ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                Running…
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5" />
+                Run
+              </>
+            )}
           </Button>
         </div>
       </header>
 
       {/* Free-tier notice */}
-      <div className="bg-yellow-50 dark:bg-yellow-950/30 border-b border-yellow-200 dark:border-yellow-900 px-4 py-2 text-xs text-yellow-700 dark:text-yellow-400 flex items-center gap-2">
-        <span>⚠️</span>
-        Free tier: prompts may be used by Google to improve their products. Avoid entering sensitive data.
+      <div className="m4m-provider-notice">
+        Free tier: prompts may be used by Google to improve their products.
+        Avoid entering sensitive data.
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 w-full flex-1 flex gap-6">
-        {/* Left panel — inputs */}
-        <div className="w-80 shrink-0 space-y-4">
+      <div className="m4m-playground-layout">
+        {/* Input and history panel */}
+        <div className="forge-playground-panel m4m-playground-inputs space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Inputs</span>
             <button
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => setUseRawInput(!useRawInput)}
+              onClick={() => {
+                if (!useRawInput) setRawInput(JSON.stringify(input, null, 2));
+                else {
+                  try {
+                    const parsed = JSON.parse(rawInput || "{}");
+                    if (
+                      !parsed ||
+                      typeof parsed !== "object" ||
+                      Array.isArray(parsed)
+                    )
+                      throw new Error();
+                    setInput(parsed);
+                  } catch {
+                    toast.error(
+                      "Enter a valid JSON object before switching to form view",
+                    );
+                    return;
+                  }
+                }
+                setUseRawInput(!useRawInput);
+              }}
             >
               {useRawInput ? "Form view" : "Raw JSON"}
             </button>
@@ -141,7 +189,11 @@ export function PlaygroundPage({ agentId }: { agentId: string }) {
               aria-label="Raw JSON input"
             />
           ) : (
-            <InputForm params={agent.config.inputParams || []} values={input} onChange={setInput} />
+            <InputForm
+              params={agent.config.inputParams || []}
+              values={input}
+              onChange={setInput}
+            />
           )}
 
           <Separator />
@@ -153,8 +205,8 @@ export function PlaygroundPage({ agentId }: { agentId: string }) {
           />
         </div>
 
-        {/* Right panel — output */}
-        <div className="flex-1 min-w-0">
+        {/* Main output panel */}
+        <div className="forge-playground-panel m4m-playground-output min-w-0">
           <Tabs value={outputTab} onValueChange={setOutputTab}>
             <TabsList>
               <TabsTrigger value="output">Output</TabsTrigger>
@@ -165,7 +217,11 @@ export function PlaygroundPage({ agentId }: { agentId: string }) {
 
             <div className="mt-4">
               <TabsContent value="output">
-                <OutputPanel result={result} isLoading={runMutation.isPending} format={agent.config.outputFormat} />
+                <OutputPanel
+                  result={result}
+                  isLoading={runMutation.isPending}
+                  format={agent.config.outputFormat}
+                />
               </TabsContent>
               <TabsContent value="validation">
                 <ValidationPanel result={result} />
@@ -185,12 +241,17 @@ export function PlaygroundPage({ agentId }: { agentId: string }) {
 }
 
 function ValidationPanel({ result }: { result: PlaygroundRunResult | null }) {
-  if (!result) return <EmptyOutput label="Run the agent to see validation results." />;
+  if (!result)
+    return <EmptyOutput label="Run the agent to see validation results." />;
   return (
     <div className="rounded-lg border p-4 space-y-3">
       <div className="flex items-center gap-2">
-        <div className={`w-3 h-3 rounded-full ${result.valid ? "bg-green-500" : "bg-red-500"}`} />
-        <span className="font-medium text-sm">{result.valid ? "Valid output" : "Validation failed"}</span>
+        <div
+          className={`w-3 h-3 rounded-full ${result.valid ? "bg-green-500" : "bg-red-500"}`}
+        />
+        <span className="font-medium text-sm">
+          {result.valid ? "Valid output" : "Validation failed"}
+        </span>
       </div>
       {result.error && (
         <div className="rounded-md bg-destructive/10 text-destructive text-sm p-3">

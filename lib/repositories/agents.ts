@@ -1,18 +1,20 @@
+import { ownerId } from "@/lib/security/owner";
 import { db, runMigrations } from "@/lib/db/client";
 import { agents, agentVersions, resources } from "@/lib/db/schema";
 import { eq, desc, like, and } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import { encryptSecret } from "@/lib/security/secrets";
-import type { CreateAgent, UpdateAgent, Agent, AgentConfig, ExternalApi, CustomTool } from "@/lib/schemas/agent";
+import type {
+  CreateAgent,
+  UpdateAgent,
+  Agent,
+  AgentConfig,
+  ExternalApi,
+  CustomTool,
+} from "@/lib/schemas/agent";
 
 // Run migrations on first import
-let migrated = false;
-function ensureMigrated() {
-  if (!migrated) {
-    runMigrations();
-    migrated = true;
-  }
-}
+const ensureMigrated = runMigrations;
 
 function parseAgent(row: typeof agents.$inferSelect): Agent {
   return {
@@ -22,7 +24,9 @@ function parseAgent(row: typeof agents.$inferSelect): Agent {
     status: row.status as "draft" | "active",
     schemaVersion: row.schemaVersion,
     config: JSON.parse(row.config) as AgentConfig,
-    customTool: row.customTool ? JSON.parse(row.customTool) as CustomTool : null,
+    customTool: row.customTool
+      ? (JSON.parse(row.customTool) as CustomTool)
+      : null,
     externalApis: JSON.parse(row.externalApis) as ExternalApi[],
     apiKeyHash: row.apiKeyHash,
     runsCount: row.runsCount,
@@ -32,11 +36,19 @@ function parseAgent(row: typeof agents.$inferSelect): Agent {
 }
 
 /** Encrypt any header values marked with "raw:" prefix by the client */
-function processExternalApiSecrets(apis: ExternalApi[]): ExternalApi[] {
+function processExternalApiSecrets(
+  apis: ExternalApi[],
+  existing: ExternalApi[] = [],
+): ExternalApi[] {
   return apis.map((api) => {
     const processedHeaders: Record<string, string> = {};
     for (const [k, v] of Object.entries(api.headers)) {
-      if (v.startsWith("raw:")) {
+      if (v === "enc:[REDACTED]") {
+        const saved = existing.find((a) => a.id === api.id)?.headers[k];
+        if (!saved?.startsWith("enc:"))
+          throw new Error("Secret placeholder has no stored value");
+        processedHeaders[k] = saved;
+      } else if (v.startsWith("raw:")) {
         processedHeaders[k] = `enc:${encryptSecret(v.slice(4))}`;
       } else {
         processedHeaders[k] = v;
@@ -47,31 +59,43 @@ function processExternalApiSecrets(apis: ExternalApi[]): ExternalApi[] {
 }
 
 export const agentsRepository = {
-  async findAll(opts?: { search?: string; status?: "draft" | "active" }): Promise<Agent[]> {
-    ensureMigrated();
-    const conditions = [];
+  async findAll(opts?: {
+    search?: string;
+    status?: "draft" | "active";
+  }): Promise<Agent[]> {
+    await ensureMigrated();
+    const conditions = [eq(agents.ownerId, ownerId())];
     if (opts?.search) conditions.push(like(agents.name, `%${opts.search}%`));
     if (opts?.status) conditions.push(eq(agents.status, opts.status));
 
-    const rows = conditions.length > 0
-      ? await db.select().from(agents).where(and(...conditions)).orderBy(desc(agents.updatedAt))
-      : await db.select().from(agents).orderBy(desc(agents.updatedAt));
+    const rows =
+      conditions.length > 0
+        ? await db
+            .select()
+            .from(agents)
+            .where(and(...conditions))
+            .orderBy(desc(agents.updatedAt))
+        : await db.select().from(agents).orderBy(desc(agents.updatedAt));
 
     return rows.map(parseAgent);
   },
 
   async findById(id: string): Promise<Agent | null> {
-    ensureMigrated();
-    const rows = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
+    await ensureMigrated();
+    const rows = await db
+      .select()
+      .from(agents)
+      .where(and(eq(agents.id, id), eq(agents.ownerId, ownerId())))
+      .limit(1);
     return rows[0] ? parseAgent(rows[0]) : null;
   },
 
   async create(data: CreateAgent): Promise<Agent> {
-    ensureMigrated();
+    await ensureMigrated();
     const now = Date.now();
     const id = uuidv4();
     const defaultConfig: AgentConfig = {
-      model: process.env.GEMINI_DEFAULT_MODEL || "gemini-2.0-flash",
+      model: process.env.GEMINI_DEFAULT_MODEL || "gemini-3.5-flash-lite",
       temperature: 0.7,
       maxTokens: 2048,
       systemPrompt: "",
@@ -89,6 +113,7 @@ export const agentsRepository = {
 
     await db.insert(agents).values({
       id,
+      ownerId: ownerId(),
       name: data.name,
       description: data.description || "",
       status: data.status || "draft",
@@ -106,7 +131,7 @@ export const agentsRepository = {
   },
 
   async update(id: string, data: UpdateAgent): Promise<Agent | null> {
-    ensureMigrated();
+    await ensureMigrated();
     const existing = await this.findById(id);
     if (!existing) return null;
 
@@ -114,22 +139,38 @@ export const agentsRepository = {
       ? { ...existing.config, ...data.config }
       : existing.config;
 
-    await db.update(agents).set({
-      name: data.name ?? existing.name,
-      description: data.description ?? existing.description,
-      status: data.status ?? existing.status,
-      config: JSON.stringify(updatedConfig),
-      customTool: data.customTool !== undefined
-        ? (data.customTool ? JSON.stringify(data.customTool) : null)
-        : (existing.customTool ? JSON.stringify(existing.customTool) : null),
-      externalApis: data.externalApis !== undefined
-        ? JSON.stringify(processExternalApiSecrets(data.externalApis))
-        : JSON.stringify(existing.externalApis),
-      updatedAt: Date.now(),
-    }).where(eq(agents.id, id));
+    await db
+      .update(agents)
+      .set({
+        name: data.name ?? existing.name,
+        description: data.description ?? existing.description,
+        status: data.status ?? existing.status,
+        config: JSON.stringify(updatedConfig),
+        customTool:
+          data.customTool !== undefined
+            ? data.customTool
+              ? JSON.stringify(data.customTool)
+              : null
+            : existing.customTool
+              ? JSON.stringify(existing.customTool)
+              : null,
+        externalApis:
+          data.externalApis !== undefined
+            ? JSON.stringify(
+                processExternalApiSecrets(
+                  data.externalApis,
+                  existing.externalApis,
+                ),
+              )
+            : JSON.stringify(existing.externalApis),
+        updatedAt: Date.now(),
+      })
+      .where(and(eq(agents.id, id), eq(agents.ownerId, ownerId())));
 
     // Create version snapshot
-    const versionRows = await db.select().from(agentVersions)
+    const versionRows = await db
+      .select()
+      .from(agentVersions)
       .where(eq(agentVersions.agentId, id))
       .orderBy(desc(agentVersions.version))
       .limit(1);
@@ -147,12 +188,14 @@ export const agentsRepository = {
   },
 
   async delete(id: string): Promise<void> {
-    ensureMigrated();
-    await db.delete(agents).where(eq(agents.id, id));
+    await ensureMigrated();
+    await db
+      .delete(agents)
+      .where(and(eq(agents.id, id), eq(agents.ownerId, ownerId())));
   },
 
   async duplicate(id: string): Promise<Agent | null> {
-    ensureMigrated();
+    await ensureMigrated();
     const existing = await this.findById(id);
     if (!existing) return null;
     return this.create({
@@ -166,28 +209,39 @@ export const agentsRepository = {
   },
 
   async incrementRunsCount(id: string): Promise<void> {
-    ensureMigrated();
+    await ensureMigrated();
     const existing = await this.findById(id);
     if (!existing) return;
-    await db.update(agents).set({
-      runsCount: existing.runsCount + 1,
-    }).where(eq(agents.id, id));
+    await db
+      .update(agents)
+      .set({
+        runsCount: existing.runsCount + 1,
+      })
+      .where(and(eq(agents.id, id), eq(agents.ownerId, ownerId())));
   },
 
   async getVersions(agentId: string) {
-    ensureMigrated();
-    return db.select().from(agentVersions)
+    await ensureMigrated();
+    if (!(await this.findById(agentId))) return [];
+    return db
+      .select()
+      .from(agentVersions)
       .where(eq(agentVersions.agentId, agentId))
       .orderBy(desc(agentVersions.version));
   },
 
   async getResources(agentId: string) {
-    ensureMigrated();
+    await ensureMigrated();
+    if (!(await this.findById(agentId))) return [];
     return db.select().from(resources).where(eq(resources.agentId, agentId));
   },
 
-  async addResource(agentId: string, data: { name: string; mimeType: string; size: number; content: string }) {
-    ensureMigrated();
+  async addResource(
+    agentId: string,
+    data: { name: string; mimeType: string; size: number; content: string },
+  ) {
+    await ensureMigrated();
+    if (!(await this.findById(agentId))) throw new Error("Agent not found");
     const id = uuidv4();
     await db.insert(resources).values({
       id,
@@ -199,19 +253,29 @@ export const agentsRepository = {
   },
 
   async deleteResource(id: string) {
-    ensureMigrated();
+    await ensureMigrated();
+    const [resource] = await db
+      .select()
+      .from(resources)
+      .where(eq(resources.id, id))
+      .limit(1);
+    if (!resource || !(await this.findById(resource.agentId))) return;
     await db.delete(resources).where(eq(resources.id, id));
   },
 
   async setApiKey(id: string, hash: string): Promise<void> {
-    ensureMigrated();
-    await db.update(agents).set({ apiKeyHash: hash || null }).where(eq(agents.id, id));
+    await ensureMigrated();
+    await db
+      .update(agents)
+      .set({ apiKeyHash: hash || null })
+      .where(and(eq(agents.id, id), eq(agents.ownerId, ownerId())));
   },
 
   async revokeApiKey(id: string): Promise<void> {
-    ensureMigrated();
-    await db.update(agents).set({ apiKeyHash: null }).where(eq(agents.id, id));
+    await ensureMigrated();
+    await db
+      .update(agents)
+      .set({ apiKeyHash: null })
+      .where(and(eq(agents.id, id), eq(agents.ownerId, ownerId())));
   },
 };
-
-

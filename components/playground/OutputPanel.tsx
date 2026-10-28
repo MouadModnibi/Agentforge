@@ -30,7 +30,7 @@ export function OutputPanel({ result, isLoading, format }: Props) {
     return (
       <div className="rounded-lg border border-dashed min-h-[400px] flex items-center justify-center">
         <p className="text-sm text-muted-foreground">
-          Press <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">⌘↵</kbd> or click Run to see output.
+          Run the agent to inspect its output.
         </p>
       </div>
     );
@@ -40,7 +40,9 @@ export function OutputPanel({ result, isLoading, format }: Props) {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 min-h-[200px]">
         <p className="text-sm font-medium text-destructive mb-2">Run failed</p>
-        <pre className="text-xs text-destructive/80 whitespace-pre-wrap font-mono">{result.error}</pre>
+        <pre className="text-xs text-destructive/80 whitespace-pre-wrap font-mono">
+          {result.error}
+        </pre>
         <ErrorHint error={result.error} />
       </div>
     );
@@ -67,14 +69,25 @@ export function OutputPanel({ result, isLoading, format }: Props) {
             {format} output
           </span>
           {result.valid === true && (
-            <span className="text-xs text-green-600 dark:text-green-400">✓ valid</span>
+            <span className="text-xs text-green-600 dark:text-green-400">
+              ✓ valid
+            </span>
           )}
           {result.valid === false && (
             <span className="text-xs text-red-500">✗ invalid schema</span>
           )}
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCopy}>
-          {copied ? <CheckCheck className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={handleCopy}
+        >
+          {copied ? (
+            <CheckCheck className="w-3.5 h-3.5 text-green-500" />
+          ) : (
+            <Copy className="w-3.5 h-3.5" />
+          )}
         </Button>
       </div>
       <ScrollArea className="flex-1 p-4">
@@ -89,14 +102,23 @@ export function OutputPanel({ result, isLoading, format }: Props) {
 function ErrorHint({ error }: { error: string }) {
   const lower = error.toLowerCase();
   let hint = "";
-  if (lower.includes("quota") || lower.includes("429") || lower.includes("rate limit") || lower.includes("resource exhausted")) {
-    hint = "You've hit Gemini's free-tier rate limit. Wait a minute and try again, or enable billing in Google AI Studio to raise limits.";
+  if (
+    lower.includes("quota") ||
+    lower.includes("429") ||
+    lower.includes("rate limit") ||
+    lower.includes("resource exhausted")
+  ) {
+    hint =
+      "You've hit Gemini's free-tier rate limit. Wait a minute and try again, or enable billing in Google AI Studio to raise limits.";
   } else if (lower.includes("api key") || lower.includes("missing")) {
-    hint = "Add your GOOGLE_GENERATIVE_AI_API_KEY to .env.local and restart the server.";
+    hint =
+      "Add your GOOGLE_GENERATIVE_AI_API_KEY to .env.local and restart the server.";
   } else if (lower.includes("timeout")) {
-    hint = "The run exceeded the timeout. Try reducing maxIterations or simplifying your prompt.";
+    hint =
+      "The run exceeded the timeout. Try reducing maxIterations or simplifying your prompt.";
   } else if (lower.includes("json")) {
-    hint = "Output couldn't be parsed as JSON. Try enabling strict validation with repair retries.";
+    hint =
+      "Output couldn't be parsed as JSON. Try enabling strict validation with repair retries.";
   }
   if (!hint) return null;
   return (

@@ -1,0 +1,80 @@
+{
+  "name": "Email triage",
+  "description": "New mail becomes an agent task, then a structured record.",
+  "graph": {
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "emailTrigger",
+        "label": "New email",
+        "position": {
+          "x": 40,
+          "y": 180
+        },
+        "config": {
+          "credentialId": "",
+          "mailbox": "INBOX"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "agent",
+        "kind": "agent",
+        "label": "Classify the email",
+        "position": {
+          "x": 340,
+          "y": 180
+        },
+        "config": {
+          "agentId": "",
+          "input": {
+            "text": "{{input.text}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "record",
+        "kind": "transform",
+        "label": "Prepare triage record",
+        "position": {
+          "x": 650,
+          "y": 180
+        },
+        "config": {
+          "values": {
+            "subject": "{{trigger.subject}}",
+            "classification": "{{nodes.agent}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      }
+    ],
+    "edges": [
+      {
+        "id": "s-a",
+        "source": "start",
+        "target": "agent",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "a-r",
+        "source": "agent",
+        "target": "record",
+        "sourceHandle": "out"
+      }
+    ]
+  }
+}

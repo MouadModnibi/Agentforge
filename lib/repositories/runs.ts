@@ -1,16 +1,12 @@
+import { agentsRepository } from "./agents";
+import { ownerId } from "@/lib/security/owner";
 import { db, runMigrations } from "@/lib/db/client";
 import { runs, agents } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, inArray, sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
 import type { Run } from "@/lib/schemas/run";
 
-let migrated = false;
-function ensureMigrated() {
-  if (!migrated) {
-    runMigrations();
-    migrated = true;
-  }
-}
+const ensureMigrated = runMigrations;
 
 function parseRun(row: typeof runs.$inferSelect): Run {
   return {
@@ -42,7 +38,9 @@ export const runsRepository = {
     durationMs?: number;
     error?: string;
   }): Promise<Run> {
-    ensureMigrated();
+    await ensureMigrated();
+    if (!(await agentsRepository.findById(data.agentId)))
+      throw new Error("Agent not found");
     const id = uuidv4();
     const now = Date.now();
 
@@ -62,23 +60,48 @@ export const runsRepository = {
     });
 
     // Increment agent runs count
-    const agentRow = await db.select({ runsCount: agents.runsCount }).from(agents).where(eq(agents.id, data.agentId)).limit(1);
+    const agentRow = await db
+      .select({ runsCount: agents.runsCount })
+      .from(agents)
+      .where(eq(agents.id, data.agentId))
+      .limit(1);
     if (agentRow[0]) {
-      await db.update(agents).set({ runsCount: agentRow[0].runsCount + 1 }).where(eq(agents.id, data.agentId));
+      await db
+        .update(agents)
+        .set({ runsCount: sql`${agents.runsCount} + 1` })
+        .where(eq(agents.id, data.agentId));
     }
 
     return (await this.findById(id))!;
   },
 
   async findById(id: string): Promise<Run | null> {
-    ensureMigrated();
-    const rows = await db.select().from(runs).where(eq(runs.id, id)).limit(1);
+    await ensureMigrated();
+    const rows = await db
+      .select()
+      .from(runs)
+      .where(
+        and(
+          eq(runs.id, id),
+          inArray(
+            runs.agentId,
+            db
+              .select({ id: agents.id })
+              .from(agents)
+              .where(eq(agents.ownerId, ownerId())),
+          ),
+        ),
+      )
+      .limit(1);
     return rows[0] ? parseRun(rows[0]) : null;
   },
 
   async findByAgent(agentId: string, limit = 50): Promise<Run[]> {
-    ensureMigrated();
-    const rows = await db.select().from(runs)
+    await ensureMigrated();
+    if (!(await agentsRepository.findById(agentId))) return [];
+    const rows = await db
+      .select()
+      .from(runs)
       .where(eq(runs.agentId, agentId))
       .orderBy(desc(runs.createdAt))
       .limit(limit);

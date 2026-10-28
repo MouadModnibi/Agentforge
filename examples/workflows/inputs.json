@@ -1,0 +1,20 @@
+{
+  "starter": {
+    "text": "Hello from m4m"
+  },
+  "routing": {
+    "text": "I need help with my account",
+    "priority": "high"
+  },
+  "agent": {
+    "text": "Summarize this message into one sentence."
+  },
+  "telegram": {
+    "text": "Hello",
+    "chatId": "YOUR_CHAT_ID"
+  },
+  "email": {
+    "subject": "Support request",
+    "text": "Please help"
+  }
+}

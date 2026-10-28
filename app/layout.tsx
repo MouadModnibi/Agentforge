@@ -1,30 +1,28 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./workflows.css";
+import "./accounts.css";
+import "@fontsource/barlow-condensed/600.css";
+import "@fontsource-variable/ibm-plex-sans";
+import "@fontsource/ibm-plex-mono/400.css";
+import "./signal-desk.css";
+import "./visual-effects.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "AgentForge — No-code AI Agent Builder",
-  description: "Create, configure, test and deploy modular AI agents powered by Gemini.",
+  title: { default: "m4m — Automation studio", template: "%s · m4m" },
+  description:
+    "Build and run workflows, manage AI agents, and connect services in m4m.",
+  icons: { icon: "/m4m-icon.svg" },
 };
 
-// Inline script to apply saved theme before first paint — prevents FOUC
-const themeScript = `
-(function(){
-  try {
-    var t = localStorage.getItem('agentforge-theme') || 'system';
-    var dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if (dark) document.documentElement.classList.add('dark');
-  } catch(e){}
-})();
-`;
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      {/* eslint-disable-next-line @next/next/no-before-interactive-script-component */}
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
+    <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <body>
         <Providers>{children}</Providers>
       </body>

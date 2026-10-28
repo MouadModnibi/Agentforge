@@ -1,13 +1,27 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useState, useCallback } from "react";
-import { Plus, Trash2, Play, CheckCircle2, XCircle, Loader2, Terminal, ShieldAlert } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Play,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Terminal,
+  ShieldAlert,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import type { CustomTool } from "@/lib/schemas/agent";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
@@ -19,7 +33,7 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ),
 });
 
-const DEFAULT_CODE = `// AgentForge Custom Tool
+const DEFAULT_CODE = `// m4m Custom Tool
 // Export an async function named \`run\` that receives (args, ctx).
 // ctx.fetch is available for allowed outbound HTTP requests.
 // No require(), no process, no filesystem.
@@ -65,12 +79,23 @@ export function CustomToolTab({ customTool, onChange }: Props) {
     if (customTool) {
       onChange({ ...customTool, ...partial });
     } else {
-      onChange({ name: "", description: "", parameterSchema: DEFAULT_SCHEMA, code: DEFAULT_CODE, ...partial });
+      onChange({
+        name: "",
+        description: "",
+        parameterSchema: DEFAULT_SCHEMA,
+        code: DEFAULT_CODE,
+        ...partial,
+      });
     }
   }
 
   const handleEnable = useCallback(() => {
-    onChange({ name: "", description: "", parameterSchema: DEFAULT_SCHEMA, code: DEFAULT_CODE });
+    onChange({
+      name: "",
+      description: "",
+      parameterSchema: DEFAULT_SCHEMA,
+      code: DEFAULT_CODE,
+    });
   }, [onChange]);
 
   const handleDisable = useCallback(() => {
@@ -95,10 +120,16 @@ export function CustomToolTab({ customTool, onChange }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: tool.code, args, timeoutMs: 3000 }),
       });
-      const json = await res.json() as { data?: { result: unknown; durationMs: number }; error?: { code: string; message: string } };
+      const json = (await res.json()) as {
+        data?: { result: unknown; durationMs: number };
+        error?: { code: string; message: string };
+      };
 
       if (!res.ok || json.error) {
-        setTestResult({ status: "error", error: json.error?.message ?? "Test failed" });
+        setTestResult({
+          status: "error",
+          error: json.error?.message ?? "Test failed",
+        });
       } else {
         setTestResult({
           status: "success",
@@ -107,7 +138,10 @@ export function CustomToolTab({ customTool, onChange }: Props) {
         });
       }
     } catch (err) {
-      setTestResult({ status: "error", error: err instanceof Error ? err.message : "Network error" });
+      setTestResult({
+        status: "error",
+        error: err instanceof Error ? err.message : "Network error",
+      });
     }
   }
 
@@ -117,7 +151,8 @@ export function CustomToolTab({ customTool, onChange }: Props) {
         <div>
           <h3 className="text-base font-semibold">Custom Tool</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Write a JavaScript function your agent can call during execution. Runs in a secure sandbox.
+            Write a JavaScript function your agent can call during execution.
+            Runs in a secure sandbox.
           </p>
         </div>
 
@@ -127,7 +162,7 @@ export function CustomToolTab({ customTool, onChange }: Props) {
             <div className="text-center">
               <p className="font-medium">No custom tool configured</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Add a JavaScript tool to extend your agent's capabilities.
+                Add a JavaScript tool to extend your agent&apos;s capabilities.
               </p>
             </div>
             <Button onClick={handleEnable}>
@@ -159,17 +194,19 @@ export function CustomToolTab({ customTool, onChange }: Props) {
       <div className="flex gap-2.5 rounded-md border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 p-3 text-sm">
         <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
         <div className="text-amber-800 dark:text-amber-300">
-          <strong>Sandbox limits:</strong> Code runs in an isolated environment with no filesystem, no{" "}
-          <code>require()</code>, no <code>process</code>. Outbound <code>fetch</code> is allowed but goes
-          through an SSRF guard. Execution is limited to 5 s. API runs require{" "}
-          <code>isolated-vm</code> to be installed.
+          <strong>Sandbox limits:</strong> Code runs in an isolated environment
+          with no filesystem, no <code>require()</code>, no <code>process</code>
+          , and no direct network access. Use an HTTP workflow node to call an
+          external service. Tool tests have a 5 second runtime limit.
         </div>
       </div>
 
       {/* Name & Description */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <Label htmlFor="tool-name">Tool name <span className="text-destructive">*</span></Label>
+          <Label htmlFor="tool-name">
+            Tool name <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="tool-name"
             value={tool.name}
@@ -182,7 +219,9 @@ export function CustomToolTab({ customTool, onChange }: Props) {
           </p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="tool-description">Description <span className="text-destructive">*</span></Label>
+          <Label htmlFor="tool-description">
+            Description <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="tool-description"
             value={tool.description}
@@ -201,6 +240,7 @@ export function CustomToolTab({ customTool, onChange }: Props) {
         <Label>Parameter schema (JSON Schema properties)</Label>
         <div className="border rounded-md overflow-hidden">
           <MonacoEditor
+            theme="vs-dark"
             height="140px"
             language="json"
             value={tool.parameterSchema}
@@ -217,16 +257,19 @@ export function CustomToolTab({ customTool, onChange }: Props) {
         <p className="text-xs text-muted-foreground">
           Define argument types. Example:{" "}
           <code className="bg-muted px-1 rounded text-xs">
-            {"{ \"properties\": { \"x\": { \"type\": \"number\" } } }"}
+            {'{ "properties": { "x": { "type": "number" } } }'}
           </code>
         </p>
       </div>
 
       {/* Code editor */}
       <div className="space-y-1.5">
-        <Label>Function code <span className="text-destructive">*</span></Label>
+        <Label>
+          Function code <span className="text-destructive">*</span>
+        </Label>
         <div className="border rounded-md overflow-hidden">
           <MonacoEditor
+            theme="vs-dark"
             height="320px"
             language="javascript"
             value={tool.code}
@@ -240,8 +283,11 @@ export function CustomToolTab({ customTool, onChange }: Props) {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Must define <code className="bg-muted px-1 rounded">async function run(args, ctx)</code>. Return
-          any serializable value.
+          Must define{" "}
+          <code className="bg-muted px-1 rounded">
+            async function run(args, ctx)
+          </code>
+          . Return any serializable value.
         </p>
       </div>
 
@@ -253,8 +299,8 @@ export function CustomToolTab({ customTool, onChange }: Props) {
             Test tool
           </CardTitle>
           <CardDescription className="text-xs">
-            Run your tool directly with JSON args. Uses the server sandbox — requires{" "}
-            <code>isolated-vm</code>.
+            Run your tool directly with JSON args. Uses the server sandbox —
+            requires <code>isolated-vm</code>.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -300,7 +346,8 @@ export function CustomToolTab({ customTool, onChange }: Props) {
                     <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
                     <span className="text-green-700 dark:text-green-400 font-medium">
                       Success
-                      {testResult.durationMs !== undefined && ` · ${testResult.durationMs}ms`}
+                      {testResult.durationMs !== undefined &&
+                        ` · ${testResult.durationMs}ms`}
                     </span>
                   </>
                 )}
@@ -320,7 +367,7 @@ export function CustomToolTab({ customTool, onChange }: Props) {
               <pre className="whitespace-pre-wrap break-all">
                 {testResult.status === "success"
                   ? JSON.stringify(testResult.output, null, 2)
-                  : testResult.error ?? ""}
+                  : (testResult.error ?? "")}
               </pre>
             </div>
           )}

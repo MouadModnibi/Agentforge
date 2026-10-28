@@ -7,7 +7,7 @@ const buckets = new Map<string, TokenBucket>();
 
 export function checkRateLimit(
   key: string,
-  maxPerMinute: number = 60
+  maxPerMinute: number = 60,
 ): { allowed: boolean; retryAfterMs: number } {
   const now = Date.now();
   const bucket = buckets.get(key) ?? { tokens: maxPerMinute, lastRefill: now };
@@ -19,7 +19,9 @@ export function checkRateLimit(
   bucket.lastRefill = now;
 
   if (bucket.tokens < 1) {
-    const retryAfterMs = Math.ceil((1 - bucket.tokens) / (maxPerMinute / 60000));
+    const retryAfterMs = Math.ceil(
+      (1 - bucket.tokens) / (maxPerMinute / 60000),
+    );
     buckets.set(key, bucket);
     return { allowed: false, retryAfterMs };
   }
@@ -30,11 +32,14 @@ export function checkRateLimit(
 }
 
 // Cleanup old buckets every 5 minutes
-setInterval(() => {
-  const cutoff = Date.now() - 5 * 60 * 1000;
-  for (const [key, bucket] of buckets.entries()) {
-    if (bucket.lastRefill < cutoff) {
-      buckets.delete(key);
+setInterval(
+  () => {
+    const cutoff = Date.now() - 5 * 60 * 1000;
+    for (const [key, bucket] of buckets.entries()) {
+      if (bucket.lastRefill < cutoff) {
+        buckets.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000,
+);

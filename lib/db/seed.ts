@@ -1,4 +1,5 @@
-import { runMigrations } from "./client";
+import { runMigrations, query } from "./client";
+import { withOwner } from "@/lib/security/owner";
 import { agentsRepository } from "@/lib/repositories/agents";
 
 const STARTER_AGENTS = [
@@ -69,7 +70,10 @@ Return a JSON object with:
       outputSchema: JSON.stringify({
         type: "object",
         properties: {
-          sentiment: { type: "string", enum: ["positive", "negative", "neutral", "mixed"] },
+          sentiment: {
+            type: "string",
+            enum: ["positive", "negative", "neutral", "mixed"],
+          },
           confidence: { type: "number" },
           explanation: { type: "string" },
           emotions: { type: "array", items: { type: "string" } },
@@ -106,7 +110,8 @@ Extract all relevant entities and facts into a JSON object with appropriate keys
           name: "fields",
           type: "string" as const,
           required: false,
-          description: "Comma-separated list of specific fields to extract (optional)",
+          description:
+            "Comma-separated list of specific fields to extract (optional)",
         },
       ],
       outputFormat: "json" as const,
@@ -120,7 +125,7 @@ Extract all relevant entities and facts into a JSON object with appropriate keys
 ];
 
 export async function seed() {
-  runMigrations();
+  await runMigrations();
   console.log("Running seed...");
 
   const existing = await agentsRepository.findAll();
@@ -139,5 +144,18 @@ export async function seed() {
 
 // Run if called directly
 if (require.main === module) {
-  seed().catch(console.error);
+  (async () => {
+    await runMigrations();
+    const email = process.env.SEED_EMAIL;
+    if (!email) throw new Error("Set SEED_EMAIL to a registered account.");
+    const [user] = await query(
+      "SELECT id FROM users WHERE email=? COLLATE NOCASE AND password_hash IS NOT NULL",
+      email,
+    );
+    if (!user) throw new Error("Register the seed account first.");
+    await withOwner(String(user.id), seed);
+  })().catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
 }

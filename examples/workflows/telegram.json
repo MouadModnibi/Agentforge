@@ -1,0 +1,78 @@
+{
+  "name": "Telegram AI assistant",
+  "description": "A Telegram message comes in. Your agent writes the reply.",
+  "graph": {
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "telegramTrigger",
+        "label": "Incoming Telegram message",
+        "position": {
+          "x": 40,
+          "y": 180
+        },
+        "config": {
+          "credentialId": ""
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "agent",
+        "kind": "agent",
+        "label": "Write a helpful reply",
+        "position": {
+          "x": 340,
+          "y": 180
+        },
+        "config": {
+          "agentId": "",
+          "input": {
+            "text": "{{input.text}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "reply",
+        "kind": "telegram",
+        "label": "Reply on Telegram",
+        "position": {
+          "x": 650,
+          "y": 180
+        },
+        "config": {
+          "credentialId": "",
+          "chatId": "{{trigger.chatId}}",
+          "text": "{{nodes.agent}}"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      }
+    ],
+    "edges": [
+      {
+        "id": "s-a",
+        "source": "start",
+        "target": "agent",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "a-r",
+        "source": "agent",
+        "target": "reply",
+        "sourceHandle": "out"
+      }
+    ]
+  }
+}

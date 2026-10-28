@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="260" viewBox="0 0 560 260" fill="none">
+ <defs><linearGradient id="core" x1="230" y1="57" x2="313" y2="163" gradientUnits="userSpaceOnUse"><stop stop-color="#bfd7e9"/><stop offset="1" stop-color="#637f95"/></linearGradient><linearGradient id="base" x1="250" y1="117" x2="295" y2="235" gradientUnits="userSpaceOnUse"><stop stop-color="#3b4955"/><stop offset="1" stop-color="#1b242d"/></linearGradient><filter id="blur"><feGaussianBlur stdDeviation="9"/></filter></defs>
+ <ellipse cx="295" cy="214" rx="179" ry="14" fill="#000" opacity=".3" filter="url(#blur)"/>
+ <path d="m92 163 210-74 168 73-210 76z" fill="#10151b" stroke="#3b4855"/>
+ <path d="m92 152 210-74 168 73-210 76z" fill="url(#base)" stroke="#526371"/>
+ <path d="M92 152v11l168 75v-11m210-76v11" stroke="#526371"/>
+ <g stroke="#839bad" stroke-width="1.5"><path d="m139 154 100-34m-64 65 95-35m85-26 72 30m-101 8 65 29"/><path d="m194 143-19-8-34 12m62 29-20-9-33 12m214-48 22-8 38 16m-81 41 23-8 35 16" opacity=".5"/></g>
+ <path d="m211 126 86-30 61 26-86 31z" fill="#3e5569" stroke="#92acbf"/>
+ <path d="M211 96v30l61 27v-30m86-31v30l-86 31" fill="#334958" stroke="#92acbf"/>
+ <path d="m211 96 86-30 61 26-86 31z" fill="url(#core)" stroke="#d5e7f2"/>
+ <path d="m237 95 48-17 37 16-48 17z" fill="#3a5267" stroke="#7395ad"/>
+ <path d="m250 95 35-12 23 11-35 12z" fill="#b8d2e8" stroke="#d3e4ee"/>
+ <path d="m263 91 16 7m-8-9 16 7m-15-3 8-3" stroke="#4c697d"/>
+ <g stroke="#e8bf66" stroke-width="2"><path d="m194 103 12 6m-27 0 12 6m-27 0 12 6m168-33 13-5m-1 12 13-5m-1 12 13-5"/></g>
+ <path d="m132 174 33-12 22 10-33 12z" fill="#b49761" stroke="#e8bf66"/><path d="m143 173 11 4 9-3" stroke="#544224" stroke-width="2"/>
+ <path d="m366 181 33-12 22 10-33 12z" fill="#6f9385" stroke="#9dc6b1"/><path d="m379 180 9 4 10-4" stroke="#304d42" stroke-width="2"/>
+ <path d="m244 207 29-10m-15 16 29-10m-15 16 29-10" stroke="#7a8996" stroke-width="1.5"/>
+ <g fill="#111a20" stroke="#71818e"><ellipse cx="115" cy="152" rx="3" ry="1.5"/><ellipse cx="303" cy="91" rx="3" ry="1.5"/><ellipse cx="445" cy="152" rx="3" ry="1.5"/><ellipse cx="262" cy="213" rx="3" ry="1.5"/></g>
+</svg>

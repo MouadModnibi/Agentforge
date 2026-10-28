@@ -19,7 +19,7 @@ export class SandboxError extends Error {
       | "TIMEOUT"
       | "RUNTIME_ERROR"
       | "NETWORK_BLOCKED"
-      | "UNAVAILABLE" = "RUNTIME_ERROR"
+      | "UNAVAILABLE" = "RUNTIME_ERROR",
   ) {
     super(message);
     this.name = "SandboxError";
@@ -55,45 +55,68 @@ export class ServerSandbox implements CodeSandbox {
   async run(
     code: string,
     args: Record<string, unknown>,
-    opts: { timeoutMs: number }
+    opts: { timeoutMs: number },
   ): Promise<unknown> {
     if (!this.available || !this.ivm) {
       throw new SandboxError(
         "Server-side code sandbox (isolated-vm) is not installed. " +
           "Custom tools are unavailable for API runs. " +
-          "Install isolated-vm or test via the Playground instead.",
-        "UNAVAILABLE"
+          "Install isolated-vm to enable custom tools.",
+        "UNAVAILABLE",
       );
     }
 
     const isolate = new this.ivm.Isolate({ memoryLimit: 32 }); // 32 MB
-    const context = await isolate.createContext();
-    const jail = context.global;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const context = await isolate.createContext();
+      const jail = context.global;
 
-    // Inject serialisable args only – no Node APIs
-    await jail.set("__args__", new this.ivm.ExternalCopy(args).copyInto());
+      // Inject serialisable args only – no Node APIs
+      await jail.set("__args__", new this.ivm.ExternalCopy(args).copyInto());
 
-    // Wrap user code: expect an async function named `run`
-    const wrapped = `
+      // Wrap user code: expect an async function named `run`
+      const wrapped = `
       ${code}
-      (async () => {
+      return (async () => {
         const result = await run(__args__, {});
         return JSON.stringify(result === undefined ? null : result);
       })();
     `;
 
-    try {
-      const script = await isolate.compileScript(wrapped);
-      const resultRef = await script.run(context, { timeout: opts.timeoutMs });
-      const raw = await resultRef;
+      const raw = await Promise.race([
+        context.evalClosure(wrapped, [], {
+          timeout: opts.timeoutMs,
+          result: { promise: true, copy: true },
+        }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () =>
+              reject(
+                new SandboxError(
+                  `Tool timed out after ${opts.timeoutMs}ms`,
+                  "TIMEOUT",
+                ),
+              ),
+            opts.timeoutMs,
+          );
+        }),
+      ]);
       return JSON.parse(typeof raw === "string" ? raw : "null");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.toLowerCase().includes("timed out") || msg.toLowerCase().includes("timeout")) {
-        throw new SandboxError(`Tool timed out after ${opts.timeoutMs}ms`, "TIMEOUT");
+      if (
+        msg.toLowerCase().includes("timed out") ||
+        msg.toLowerCase().includes("timeout")
+      ) {
+        throw new SandboxError(
+          `Tool timed out after ${opts.timeoutMs}ms`,
+          "TIMEOUT",
+        );
       }
       throw new SandboxError(`Tool runtime error: ${msg}`, "RUNTIME_ERROR");
     } finally {
+      clearTimeout(timer);
       isolate.dispose();
     }
   }
@@ -150,7 +173,7 @@ export class BrowserWorkerSandbox implements CodeSandbox {
   async run(
     code: string,
     args: Record<string, unknown>,
-    opts: { timeoutMs: number }
+    opts: { timeoutMs: number },
   ): Promise<unknown> {
     return new Promise((resolve, reject) => {
       const blob = new Blob([WORKER_SCRIPT], { type: "text/javascript" });
@@ -160,10 +183,17 @@ export class BrowserWorkerSandbox implements CodeSandbox {
       const outerTimer = setTimeout(() => {
         worker.terminate();
         URL.revokeObjectURL(url);
-        reject(new SandboxError(`Tool timed out after ${opts.timeoutMs}ms`, "TIMEOUT"));
+        reject(
+          new SandboxError(
+            `Tool timed out after ${opts.timeoutMs}ms`,
+            "TIMEOUT",
+          ),
+        );
       }, opts.timeoutMs + 500); // small grace beyond inner timer
 
-      worker.onmessage = (e: MessageEvent<{ result?: unknown; error?: string }>) => {
+      worker.onmessage = (
+        e: MessageEvent<{ result?: unknown; error?: string }>,
+      ) => {
         clearTimeout(outerTimer);
         worker.terminate();
         URL.revokeObjectURL(url);
@@ -174,8 +204,8 @@ export class BrowserWorkerSandbox implements CodeSandbox {
           reject(
             new SandboxError(
               rest.join(":") || error,
-              (code as SandboxError["code"]) ?? "RUNTIME_ERROR"
-            )
+              (code as SandboxError["code"]) ?? "RUNTIME_ERROR",
+            ),
           );
         } else {
           resolve(result);

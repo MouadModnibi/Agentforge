@@ -1,0 +1,494 @@
+.m4m-workflows-index {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 38px 36px;
+}
+.m4m-workflows-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.m4m-workflows-title-icon {
+  display: none;
+}
+.m4m-workflows-title-line {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.m4m-workflows-title-line h1 {
+  font: 600 46px/1.05 var(--font-display);
+  letter-spacing: -0.4px;
+}
+.m4m-workflows-title-line h1::before {
+  content: "";
+  display: block;
+  width: 30px;
+  height: 3px;
+  background: var(--desk-signal);
+  margin-bottom: 16px;
+}
+.m4m-workflows-title-line > span {
+  color: var(--desk-muted);
+  font: 14px var(--font-data);
+}
+.m4m-workflows-title p {
+  color: var(--desk-muted);
+  margin-top: 12px;
+  font-size: 14px;
+}
+.m4m-workflows-heading-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.m4m-workflows-heading-actions button {
+  height: 38px;
+  font-size: 13px;
+}
+.m4m-workflows-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--desk-line);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.m4m-workflows-tabs {
+  display: flex;
+  gap: 4px;
+  margin-right: auto;
+}
+.m4m-workflows-tabs button {
+  color: var(--desk-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+.m4m-workflows-tabs button.is-active {
+  color: var(--desk-ink);
+  background: var(--desk-raised);
+}
+.m4m-workflows-tabs button > span {
+  font: 10px var(--font-data);
+  color: var(--desk-muted);
+}
+.m4m-workflows-search {
+  position: relative;
+  width: 215px;
+}
+.m4m-workflows-search > svg {
+  position: absolute;
+  left: 11px;
+  top: 12px;
+  color: var(--desk-muted);
+}
+.m4m-workflows-search input {
+  padding-left: 33px;
+  padding-right: 32px;
+  height: 38px;
+  font-size: 13px;
+  background: var(--desk-surface);
+}
+.m4m-workflows-search > button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 36px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--desk-muted);
+}
+.m4m-workflows-view {
+  display: flex;
+  border: 1px solid var(--desk-line);
+  border-radius: 5px;
+  padding: 3px;
+  gap: 3px;
+}
+.m4m-workflows-view button {
+  height: 30px;
+  width: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--desk-muted);
+  border-radius: 3px;
+}
+.m4m-workflows-view button.is-active {
+  background: var(--desk-raised);
+  color: var(--desk-blue);
+}
+.m4m-workflows-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  counter-reset: workflow;
+}
+.m4m-workflow-visual-card {
+  border: 1px solid var(--desk-line);
+  background: var(--desk-surface);
+  border-radius: 6px;
+  overflow: hidden;
+  counter-increment: workflow;
+  transition: border-color 140ms;
+}
+.m4m-workflow-visual-card:hover,
+.m4m-workflow-visual-card:focus-within {
+  border-color: #677584;
+}
+.m4m-workflow-visual-link {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.9fr) minmax(260px, 1.1fr);
+  align-items: stretch;
+  color: inherit;
+  text-decoration: none;
+}
+.m4m-workflow-visual-copy {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 24px 26px 16px;
+  min-width: 0;
+}
+.m4m-workflow-visual-copy::before {
+  content: "ROUTE / " counter(workflow, decimal-leading-zero);
+  display: block;
+  font: 9px var(--font-data);
+  letter-spacing: 1.5px;
+  color: var(--desk-muted);
+  margin-bottom: 13px;
+}
+.m4m-workflow-visual-copy h2 {
+  font-size: 19px;
+  font-weight: 500;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.m4m-workflow-visual-copy p {
+  font-size: 13px;
+  color: var(--desk-muted);
+  margin-top: 8px;
+  line-height: 1.65;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.m4m-workflow-preview-surface {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  min-height: 146px;
+  border-left: 1px solid var(--desk-line);
+  background: var(--desk-bg);
+  padding: 18px 20px 5px;
+}
+.m4m-workflow-preview-open {
+  position: absolute;
+  right: 14px;
+  top: 13px;
+  color: var(--desk-muted);
+}
+.m4m-workflow-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--desk-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.m4m-workflow-preview-surface > .m4m-workflow-state {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+}
+.m4m-workflow-state i,
+.m4m-workflows-worker i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.m4m-workflow-state.is-active {
+  color: var(--desk-success);
+}
+.m4m-route-strip {
+  min-height: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--desk-blue);
+}
+.m4m-route-strip svg {
+  width: 100%;
+  max-height: 144px;
+  min-height: 118px;
+}
+.m4m-route-wire {
+  fill: none;
+  stroke: #6d7d8b;
+  stroke-width: 1.4;
+}
+.m4m-route-arrow {
+  fill: none;
+  stroke: var(--desk-signal);
+  stroke-width: 1.4;
+}
+.m4m-route-port {
+  fill: var(--desk-surface);
+  stroke: #687b8e;
+}
+.m4m-route-trigger {
+  color: var(--desk-signal);
+}
+.m4m-route-trigger .m4m-route-port {
+  stroke: #9d834d;
+}
+.m4m-route-jack {
+  fill: var(--desk-bg);
+  stroke: currentColor;
+}
+.m4m-route-strip text {
+  fill: var(--desk-muted);
+  font: 11px var(--font-ui);
+}
+.m4m-route-strip small {
+  font-size: 10px;
+}
+.m4m-route-strip .m4m-route-branch {
+  font: 9px var(--font-data);
+  fill: var(--desk-signal);
+}
+.m4m-workflow-visual-footer {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 9px 18px 9px 26px;
+  border-top: 1px solid var(--desk-line);
+  color: var(--desk-muted);
+  font: 10px var(--font-data);
+}
+.m4m-workflow-visual-footer > span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.m4m-workflow-visual-footer time {
+  margin-left: auto;
+}
+.m4m-workflow-more {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 28px;
+  color: var(--desk-muted);
+  border-radius: 4px;
+}
+.m4m-workflow-more:hover {
+  color: var(--desk-ink);
+  background: var(--desk-raised);
+}
+.m4m-workflow-actions-menu [role="menuitem"] {
+  gap: 9px;
+}
+.m4m-workflow-delete {
+  color: hsl(var(--destructive));
+}
+.m4m-workflows-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.m4m-workflows-table th {
+  text-align: left;
+  font: 10px var(--font-data);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--desk-muted);
+  padding: 14px;
+  border-bottom: 1px solid var(--desk-line);
+}
+.m4m-workflows-table td {
+  padding: 20px 14px;
+  border-bottom: 1px solid var(--desk-line);
+  font-size: 12px;
+  color: var(--desk-muted);
+}
+.m4m-workflows-table tr:hover td {
+  background: var(--desk-surface);
+}
+.m4m-workflow-name {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.m4m-workflow-name svg {
+  color: var(--desk-signal);
+  flex-shrink: 0;
+}
+.m4m-workflow-name strong {
+  color: var(--desk-ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+.m4m-workflow-name small {
+  display: block;
+  margin-top: 5px;
+  max-width: 380px;
+}
+.m4m-workflows-empty {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px;
+  border: 1px dashed var(--desk-line);
+  border-radius: 6px;
+}
+.m4m-workflows-empty h2 {
+  font-size: 22px;
+}
+.m4m-workflows-empty p {
+  color: var(--desk-muted);
+}
+.m4m-workflows-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 22px;
+  color: var(--desk-muted);
+  font-size: 11px;
+}
+.m4m-workflows-worker {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.m4m-workflows-worker.is-online {
+  color: var(--desk-success);
+}
+.m4m-workflow-template-dialog {
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+}
+.m4m-workflow-template-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.m4m-workflow-template-options > button {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  text-align: left;
+  border: 1px solid var(--desk-line);
+  border-radius: 5px;
+  padding: 18px;
+}
+.m4m-workflow-template-options > button:hover {
+  background: var(--desk-raised);
+}
+.m4m-workflow-template-options > button > svg {
+  flex-shrink: 0;
+  color: var(--desk-signal);
+}
+.m4m-workflow-template-options strong {
+  font-size: 14px;
+  display: block;
+}
+.m4m-workflow-template-options small {
+  display: block;
+  color: var(--desk-muted);
+  margin-top: 5px;
+  line-height: 1.5;
+}
+@media (max-width: 1050px) {
+  .m4m-workflows-heading {
+    flex-wrap: wrap;
+  }
+  .m4m-workflows-search {
+    margin-left: auto;
+  }
+  .m4m-workflow-date-column {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .m4m-workflows-index {
+    padding: 26px 18px;
+  }
+  .m4m-workflows-heading {
+    margin-bottom: 28px;
+    gap: 22px;
+  }
+  .m4m-workflows-title-line h1 {
+    font-size: 40px;
+  }
+  .m4m-workflows-heading-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .m4m-workflows-heading-actions button:last-child {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin: 0;
+    justify-content: center;
+    height: 42px;
+  }
+  .m4m-workflows-tabs {
+    width: 100%;
+  }
+  .m4m-workflows-tabs button {
+    flex: 1;
+    justify-content: center;
+    padding-inline: 8px;
+    min-height: 42px;
+  }
+  .m4m-workflows-search {
+    flex: 1;
+  }
+  .m4m-workflows-search input {
+    font-size: 16px;
+    height: 42px;
+  }
+  .m4m-workflows-view button {
+    width: 34px;
+    height: 34px;
+  }
+  .m4m-workflow-visual-link {
+    grid-template-columns: 1fr;
+  }
+  .m4m-workflow-visual-copy {
+    padding: 22px 20px;
+  }
+  .m4m-workflow-preview-surface {
+    grid-column: 1;
+    grid-row: 2;
+    border-left: 0;
+    border-top: 1px solid var(--desk-line);
+    min-height: 130px;
+  }
+  .m4m-workflow-visual-footer {
+    padding-left: 20px;
+  }
+  .m4m-workflow-more {
+    height: 32px;
+  }
+  .m4m-workflows-table th,
+  .m4m-workflows-table td {
+    padding-inline: 8px;
+  }
+  .m4m-workflow-step-column,
+  .m4m-workflow-name > svg {
+    display: none;
+  }
+}

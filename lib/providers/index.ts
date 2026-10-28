@@ -1,12 +1,13 @@
 import { getGoogleProvider } from "./google";
-import type { ModelDefinition } from "./models";
 
 export interface LLMProvider {
-  getModel(modelId: string): ReturnType<ReturnType<typeof getGoogleProvider>>;
+  getModel(
+    modelId: string,
+  ): ReturnType<Awaited<ReturnType<typeof getGoogleProvider>>>;
 }
 
-export function getProvider(): LLMProvider {
-  const google = getGoogleProvider();
+export async function getProvider(): Promise<LLMProvider> {
+  const google = await getGoogleProvider();
   return {
     getModel(modelId: string) {
       return google(modelId);

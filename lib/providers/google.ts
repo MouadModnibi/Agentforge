@@ -1,9 +1,10 @@
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { accountModelKey } from "@/lib/security/accounts";
 
-export function getGoogleProvider() {
-  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+export async function getGoogleProvider() {
+  const apiKey = await accountModelKey();
   if (!apiKey) {
-    throw new Error("GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set");
+    throw new Error("Add your Gemini API key in Account settings.");
   }
   return createGoogleGenerativeAI({ apiKey });
 }

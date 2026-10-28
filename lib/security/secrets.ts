@@ -5,7 +5,17 @@ const IV_LENGTH = 12;
 const TAG_LENGTH = 16;
 
 function getKey(): Buffer {
-  const secret = process.env.APP_SECRET || "default-dev-secret-change-in-prod-00";
+  if (
+    process.env.NODE_ENV === "production" &&
+    (!process.env.APP_SECRET ||
+      process.env.APP_SECRET.length < 32 ||
+      process.env.APP_SECRET.startsWith("change-me"))
+  )
+    throw new Error(
+      "Set a strong APP_SECRET of at least 32 characters in production",
+    );
+  const secret =
+    process.env.APP_SECRET || "default-dev-secret-change-in-prod-00";
   // Derive a 32-byte key from the secret
   return crypto.createHash("sha256").update(secret).digest();
 }
@@ -32,7 +42,11 @@ export function decryptSecret(ciphertext: string): string {
   const tag = data.subarray(IV_LENGTH, IV_LENGTH + TAG_LENGTH);
   const encrypted = data.subarray(IV_LENGTH + TAG_LENGTH);
 
-  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv) as crypto.DecipherGCM;
+  const decipher = crypto.createDecipheriv(
+    ALGORITHM,
+    key,
+    iv,
+  ) as crypto.DecipherGCM;
   decipher.setAuthTag(tag);
 
   return decipher.update(encrypted) + decipher.final("utf8");

@@ -1,0 +1,103 @@
+{
+  "name": "Route a support request",
+  "description": "Try branching and data mapping without any API keys.",
+  "graph": {
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "manual",
+        "label": "New support request",
+        "position": {
+          "x": 40,
+          "y": 200
+        },
+        "config": {},
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "priority",
+        "kind": "condition",
+        "label": "Is it urgent?",
+        "position": {
+          "x": 340,
+          "y": 200
+        },
+        "config": {
+          "value": "{{input.priority}}",
+          "operator": "equals",
+          "compare": "high"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "urgent",
+        "kind": "transform",
+        "label": "Escalate to support",
+        "position": {
+          "x": 650,
+          "y": 100
+        },
+        "config": {
+          "values": {
+            "queue": "urgent",
+            "message": "{{input.text}}",
+            "priority": "high"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "normal",
+        "kind": "transform",
+        "label": "Add to standard queue",
+        "position": {
+          "x": 650,
+          "y": 330
+        },
+        "config": {
+          "values": {
+            "queue": "standard",
+            "message": "{{input.text}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      }
+    ],
+    "edges": [
+      {
+        "id": "s-p",
+        "source": "start",
+        "target": "priority",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "p-u",
+        "source": "priority",
+        "target": "urgent",
+        "sourceHandle": "true"
+      },
+      {
+        "id": "p-n",
+        "source": "priority",
+        "target": "normal",
+        "sourceHandle": "false"
+      }
+    ]
+  }
+}

@@ -61,6 +61,7 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      style={position === "popper" ? { width: "var(--radix-select-trigger-width)", maxHeight: "min(24rem, var(--radix-select-content-available-height))" } : undefined}
       {...props}
     >
       <SelectScrollUpButton />

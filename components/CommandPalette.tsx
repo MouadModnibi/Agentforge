@@ -1,14 +1,23 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import {
-  Search, Plus, Bot, Play, Edit, Copy, Download, Moon, Sun,
+  Search,
+  Plus,
+  Bot,
+  Play,
+  Edit,
+  Copy,
+  Download,
   ArrowRight,
+  Workflow,
+  KeyRound,
 } from "lucide-react";
-import { useAgents, useCreateAgent, useDuplicateAgent } from "@/lib/hooks/useAgents";
+import { useAgents, useDuplicateAgent } from "@/lib/hooks/useAgents";
 import { toast } from "sonner";
 import type { Agent } from "@/lib/schemas/agent";
+import { useWorkflows } from "@/lib/hooks/useWorkflows";
 
 interface Props {
   open: boolean;
@@ -16,23 +25,26 @@ interface Props {
 }
 
 export function CommandPalette({ open, onClose }: Props) {
+  if (!open) return null;
+  return <OpenCommandPalette onClose={onClose} />;
+}
+function OpenCommandPalette({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const { data: agents } = useAgents(query || undefined);
-  const createAgent = useCreateAgent();
   const duplicateAgent = useDuplicateAgent();
-
-  // Reset query when closed
-  useEffect(() => {
-    if (!open) setQuery("");
-  }, [open]);
+  const { data: workflowData } = useWorkflows();
+  const matchingWorkflows =
+    workflowData?.workflows
+      .filter((w) => w.name.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 5) ?? [];
 
   const run = useCallback(
     (fn: () => void) => {
       fn();
       onClose();
     },
-    [onClose]
+    [onClose],
   );
 
   function handleExport(agent: Agent) {
@@ -42,7 +54,9 @@ export function CommandPalette({ open, onClose }: Props) {
       config: agent.config,
       customTool: agent.customTool,
     };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -51,8 +65,6 @@ export function CommandPalette({ open, onClose }: Props) {
     URL.revokeObjectURL(url);
     toast.success("Agent exported");
   }
-
-  if (!open) return null;
 
   return (
     <div
@@ -63,7 +75,7 @@ export function CommandPalette({ open, onClose }: Props) {
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/60"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -71,7 +83,7 @@ export function CommandPalette({ open, onClose }: Props) {
       {/* Panel */}
       <div className="relative z-10 w-full max-w-lg mx-4">
         <Command
-          className="rounded-xl border bg-background shadow-2xl overflow-hidden"
+          className="rounded-lg border bg-background shadow-xl overflow-hidden"
           shouldFilter={false}
         >
           <div className="flex items-center gap-2 px-3 border-b">
@@ -79,11 +91,13 @@ export function CommandPalette({ open, onClose }: Props) {
             <Command.Input
               value={query}
               onValueChange={setQuery}
-              placeholder="Search agents or type a command…"
+              placeholder="Search m4m..."
               className="flex-1 py-3 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
               autoFocus
             />
-            <kbd className="text-xs text-muted-foreground border rounded px-1.5 py-0.5">Esc</kbd>
+            <kbd className="text-xs text-muted-foreground border rounded px-1.5 py-0.5">
+              Esc
+            </kbd>
           </div>
 
           <Command.List className="max-h-80 overflow-y-auto py-2">
@@ -92,7 +106,20 @@ export function CommandPalette({ open, onClose }: Props) {
             </Command.Empty>
 
             {/* Global actions */}
-            <Command.Group heading="Actions" className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:font-medium">
+            <Command.Group
+              heading="Actions"
+              className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:font-medium"
+            >
+              <CommandItem
+                icon={<Workflow className="w-4 h-4" />}
+                label="Open workflows"
+                onSelect={() => run(() => router.push("/workflows"))}
+              />
+              <CommandItem
+                icon={<KeyRound className="w-4 h-4" />}
+                label="Manage credentials"
+                onSelect={() => run(() => router.push("/credentials"))}
+              />
               <CommandItem
                 icon={<Plus className="w-4 h-4" />}
                 label="New agent"
@@ -100,41 +127,77 @@ export function CommandPalette({ open, onClose }: Props) {
               />
               <CommandItem
                 icon={<Bot className="w-4 h-4" />}
-                label="Go to dashboard"
+                label="Open agents"
                 onSelect={() => run(() => router.push("/"))}
               />
             </Command.Group>
 
+            {matchingWorkflows.length > 0 && (
+              <Command.Group
+                heading="Workflows"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:font-medium"
+              >
+                {matchingWorkflows.map((w) => (
+                  <CommandItem
+                    key={w.id}
+                    icon={<Workflow className="w-4 h-4 text-primary" />}
+                    label={w.name}
+                    description={`${w.graph.nodes.length} steps`}
+                    onSelect={() =>
+                      run(() => router.push(`/workflows/${w.id}`))
+                    }
+                  />
+                ))}
+              </Command.Group>
+            )}
             {/* Agent list */}
             {agents && agents.length > 0 && (
-              <Command.Group heading="Agents" className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:font-medium">
+              <Command.Group
+                heading="Agents"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:font-medium"
+              >
                 {agents.slice(0, 8).map((agent) => (
-                  <Command.Group key={agent.id} className="[&_[cmdk-group-heading]]:hidden">
+                  <Command.Group
+                    key={agent.id}
+                    className="[&_[cmdk-group-heading]]:hidden"
+                  >
                     <CommandItem
                       icon={<Bot className="w-4 h-4 text-primary" />}
                       label={agent.name}
                       description={agent.description || agent.config.model}
-                      onSelect={() => run(() => router.push(`/agents/${agent.id}/edit`))}
-                      suffix={<ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />}
+                      onSelect={() =>
+                        run(() => router.push(`/agents/${agent.id}/edit`))
+                      }
+                      suffix={
+                        <ArrowRight className="w-3.5 h-3.5 text-muted-foreground" />
+                      }
                     />
                     {query.length > 0 && (
                       <>
                         <CommandItem
                           icon={<Play className="w-4 h-4" />}
                           label={`Test "${agent.name}"`}
-                          onSelect={() => run(() => router.push(`/agents/${agent.id}/playground`))}
+                          onSelect={() =>
+                            run(() =>
+                              router.push(`/agents/${agent.id}/playground`),
+                            )
+                          }
                           indent
                         />
                         <CommandItem
                           icon={<Edit className="w-4 h-4" />}
                           label={`Edit "${agent.name}"`}
-                          onSelect={() => run(() => router.push(`/agents/${agent.id}/edit`))}
+                          onSelect={() =>
+                            run(() => router.push(`/agents/${agent.id}/edit`))
+                          }
                           indent
                         />
                         <CommandItem
                           icon={<Copy className="w-4 h-4" />}
                           label={`Duplicate "${agent.name}"`}
-                          onSelect={() => run(() => duplicateAgent.mutate(agent.id))}
+                          onSelect={() =>
+                            run(() => duplicateAgent.mutate(agent.id))
+                          }
                           indent
                         />
                         <CommandItem
@@ -152,9 +215,15 @@ export function CommandPalette({ open, onClose }: Props) {
           </Command.List>
 
           <div className="border-t px-3 py-2 flex items-center gap-4 text-xs text-muted-foreground">
-            <span><kbd className="border rounded px-1 py-0.5">↑↓</kbd> navigate</span>
-            <span><kbd className="border rounded px-1 py-0.5">↵</kbd> select</span>
-            <span><kbd className="border rounded px-1 py-0.5">Esc</kbd> close</span>
+            <span>
+              <kbd className="border rounded px-1 py-0.5">↑↓</kbd> navigate
+            </span>
+            <span>
+              <kbd className="border rounded px-1 py-0.5">↵</kbd> select
+            </span>
+            <span>
+              <kbd className="border rounded px-1 py-0.5">Esc</kbd> close
+            </span>
           </div>
         </Command>
       </div>
@@ -171,7 +240,14 @@ interface CommandItemProps {
   indent?: boolean;
 }
 
-function CommandItem({ icon, label, description, suffix, onSelect, indent }: CommandItemProps) {
+function CommandItem({
+  icon,
+  label,
+  description,
+  suffix,
+  onSelect,
+  indent,
+}: CommandItemProps) {
   return (
     <Command.Item
       onSelect={onSelect}
@@ -181,7 +257,9 @@ function CommandItem({ icon, label, description, suffix, onSelect, indent }: Com
       <div className="flex-1 min-w-0">
         <span className="font-medium">{label}</span>
         {description && (
-          <span className="text-muted-foreground text-xs ml-2 truncate">{description}</span>
+          <span className="text-muted-foreground text-xs ml-2 truncate">
+            {description}
+          </span>
         )}
       </div>
       {suffix}

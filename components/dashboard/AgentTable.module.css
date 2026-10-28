@@ -1,0 +1,2 @@
+.card { border-top: 2px solid var(--desk-blue); }
+.card .icon { color: var(--desk-blue); background: var(--desk-raised); border: 1px solid var(--desk-line); border-radius: 4px; }

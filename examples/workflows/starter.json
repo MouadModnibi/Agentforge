@@ -1,0 +1,24 @@
+{
+  "name": "Start from scratch",
+  "description": "A manual trigger and a blank canvas. Make it yours.",
+  "graph": {
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "manual",
+        "label": "When I click Run",
+        "position": {
+          "x": 80,
+          "y": 180
+        },
+        "config": {},
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      }
+    ],
+    "edges": []
+  }
+}

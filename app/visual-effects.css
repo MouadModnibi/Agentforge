@@ -1,0 +1,404 @@
+/* A single motion language: route direction, material light, and quick feedback. */
+:root {
+  --motion-fast: 160ms;
+  --motion-enter: 420ms;
+  --motion-ease: cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+:is(.m4m-workflows-heading, .forge-page-heading).m4m-illustrated-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  grid-template-rows: auto auto;
+  column-gap: 24px;
+  row-gap: 20px;
+  align-items: end;
+  position: relative;
+}
+.m4m-illustrated-heading > div:first-child {
+  grid-column: 1;
+  grid-row: 1;
+}
+.m4m-illustrated-heading > div:last-child {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+}
+.m4m-workspace-artwork {
+  position: relative;
+  margin: 0;
+  width: 350px;
+  height: 180px;
+  isolation: isolate;
+  pointer-events: none;
+}
+.m4m-illustrated-heading > .m4m-workspace-artwork {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+}
+.m4m-artwork-image,
+.m4m-artwork-signals {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: auto;
+}
+.m4m-artwork-image {
+  filter: drop-shadow(0 15px 22px #0003);
+}
+.m4m-artwork-signals {
+  z-index: 2;
+}
+.m4m-artwork-orbit {
+  position: absolute;
+  left: 12%;
+  right: 10%;
+  top: 42%;
+  bottom: 15%;
+  border: 1px solid #b8d2e812;
+  border-radius: 50%;
+  transform: rotate(-13deg);
+}
+.m4m-artwork-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  color: var(--desk-muted);
+  font: 8px var(--font-data);
+  letter-spacing: 1.5px;
+  text-align: center;
+  opacity: 0.8;
+}
+.m4m-artwork-signal {
+  stroke: var(--desk-signal);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 9 91;
+  animation: desk-signal 5.5s linear infinite;
+}
+.m4m-artwork-signal.is-secondary {
+  stroke: var(--desk-blue);
+  animation-delay: -2.8s;
+  animation-duration: 7s;
+  opacity: 0.7;
+}
+.m4m-route-signal {
+  fill: none;
+  stroke: var(--desk-signal);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 8 92;
+  opacity: 0;
+}
+.m4m-workflow-visual-link:is(:hover, :focus-visible) .m4m-route-signal {
+  opacity: 0.9;
+  animation: desk-signal 3.2s linear infinite;
+}
+.m4m-workflow-visual-card {
+  position: relative;
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+.m4m-workflow-visual-card:hover {
+  border-color: #8d805d;
+  box-shadow:
+    inset 2px 0 0 var(--desk-signal),
+    0 8px 22px #0002;
+}
+.m4m-workflow-preview-open svg {
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.m4m-workflow-visual-link:is(:hover, :focus-visible)
+  .m4m-workflow-preview-open
+  svg {
+  transform: translate(2px, -2px);
+}
+.m4m-route-port {
+  transition:
+    stroke var(--motion-fast),
+    fill var(--motion-fast);
+}
+.m4m-workflow-visual-link:is(:hover, :focus-visible) .m4m-route-port {
+  fill: var(--desk-raised);
+  stroke: var(--desk-blue);
+}
+.m4m-route-preview-label {
+  position: absolute;
+  right: 34px;
+  top: 12px;
+  color: var(--desk-muted);
+  font: 8px var(--font-data);
+  opacity: 0;
+  transition: opacity var(--motion-fast);
+}
+.m4m-workflow-visual-link:is(:hover, :focus-visible) .m4m-route-preview-label {
+  opacity: 1;
+}
+.m4m-workflow-visual-card,
+.forge-agent-card {
+  animation: desk-arrive var(--motion-enter) var(--motion-ease) both;
+}
+.m4m-workflow-visual-card:nth-child(2),
+.forge-agent-card:nth-child(2) {
+  animation-delay: 40ms;
+}
+.m4m-workflow-visual-card:nth-child(3),
+.forge-agent-card:nth-child(3) {
+  animation-delay: 80ms;
+}
+.m4m-workflow-visual-card:nth-child(n + 4),
+.forge-agent-card:nth-child(n + 4) {
+  animation-delay: 120ms;
+}
+.forge-agent-card {
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+.forge-agent-card:hover {
+  box-shadow:
+    inset 0 2px var(--desk-blue),
+    0 8px 22px #0002;
+  border-color: #6b8297;
+}
+.forge-agent-card .forge-agent-icon {
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast);
+}
+.forge-agent-card:hover .forge-agent-icon {
+  background: #b8d2e819;
+  border-color: #7e96ab;
+}
+.forge-nav-item,
+.wf-library-node {
+  transition:
+    color var(--motion-fast),
+    background var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+.forge-nav-item:hover {
+  box-shadow: inset 2px 0 #b8d2e86b;
+}
+.wf-library-node:hover {
+  background: #b8d2e80a;
+}
+.wf-node {
+  transition:
+    border-color var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+.wf-node:hover {
+  box-shadow: 0 0 0 3px #b8d2e810;
+}
+[role="dialog"]:not(.m4m-mobile-navigation),
+[role="alertdialog"] {
+  animation: desk-dialog-in 180ms var(--motion-ease);
+}
+.m4m-mobile-navigation {
+  animation: desk-nav-in 220ms var(--motion-ease);
+}
+.wf-inspector {
+  animation: desk-panel-in 200ms var(--motion-ease);
+}
+.m4m-auth-artwork {
+  width: min(100%, 420px);
+  height: 206px;
+  margin: 24px -20px 0;
+}
+.m4m-auth-caption {
+  margin-top: 9px;
+}
+.m4m-auth-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.m4m-auth-motion {
+  width: auto;
+  min-height: 38px;
+  font-size: 12px;
+}
+.m4m-auth-motion .m4m-nav-label,
+.m4m-mobile-motion .m4m-nav-label {
+  display: inline;
+}
+@keyframes desk-signal {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes desk-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes desk-dialog-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+@keyframes desk-nav-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes desk-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+html[data-motion="off"]
+  :is(
+    .m4m-artwork-signal,
+    .m4m-route-signal,
+    .m4m-workflow-visual-card,
+    .forge-agent-card,
+    .wf-inspector,
+    [role="dialog"],
+    [role="alertdialog"]
+  ) {
+  animation: none;
+}
+html[data-motion="off"] :is(.m4m-artwork-signal, .m4m-route-signal) {
+  opacity: 0;
+}
+html[data-motion="off"]
+  .m4m-workflow-visual-link:is(:hover, :focus-visible)
+  .m4m-route-signal {
+  animation: none;
+  opacity: 0;
+}
+html[data-motion="off"]
+  :is(
+    .m4m-workflow-visual-card,
+    .forge-agent-card,
+    .forge-agent-icon,
+    .forge-nav-item,
+    .wf-node,
+    .wf-library-node,
+    .m4m-route-port,
+    .m4m-workflow-preview-open svg
+  ) {
+  transition: none;
+}
+@media (max-width: 1000px) {
+  :is(.m4m-workflows-heading, .forge-page-heading).m4m-illustrated-heading {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+  .m4m-workspace-artwork {
+    width: 280px;
+    height: 150px;
+  }
+}
+@media (max-width: 760px) {
+  .forge-filterbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .forge-status-tabs button {
+    flex: 1;
+  }
+  .forge-filter-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    flex: initial;
+    width: 100%;
+  }
+  .forge-filter-controls > .relative {
+    grid-column: 1 / -1;
+  }
+  .forge-filter-controls > [role="combobox"] {
+    justify-self: start;
+  }
+  .forge-filter-controls .forge-view-toggle {
+    justify-self: end;
+    margin: 0;
+  }
+  :is(.m4m-workflows-heading, .forge-page-heading).m4m-illustrated-heading {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 22px;
+  }
+  .m4m-illustrated-heading > .m4m-workspace-artwork {
+    position: absolute;
+    right: -8px;
+    top: -8px;
+    width: 140px;
+    height: 86px;
+    opacity: 0.9;
+  }
+  .m4m-artwork-caption,
+  .m4m-artwork-orbit {
+    display: none;
+  }
+  .m4m-illustrated-heading .m4m-workflows-title-line,
+  .m4m-illustrated-heading h1 {
+    max-width: calc(100vw - 155px);
+  }
+  .m4m-illustrated-heading .m4m-workflows-title p {
+    margin-top: 24px;
+  }
+  .forge-page-heading.m4m-illustrated-heading > div:first-child {
+    width: 100%;
+  }
+  .forge-page-heading.m4m-illustrated-heading > div:first-child > p {
+    margin-top: 24px;
+  }
+  .m4m-workflow-visual-card:hover {
+    box-shadow: inset 2px 0 var(--desk-signal);
+  }
+}
+@media (max-width: 360px) {
+  .m4m-illustrated-heading > .m4m-workspace-artwork {
+    width: 112px;
+    top: 0;
+  }
+  .m4m-illustrated-heading .m4m-workflows-title-line,
+  .m4m-illustrated-heading h1 {
+    max-width: calc(100vw - 138px);
+  }
+  .m4m-illustrated-heading .m4m-workflows-title-line h1 {
+    font-size: 36px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m4m-artwork-signal,
+  .m4m-route-signal {
+    display: none;
+  }
+  .m4m-workflow-visual-card,
+  .forge-agent-card,
+  .wf-inspector,
+  [role="dialog"],
+  [role="alertdialog"] {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,51 @@
+services:
+  web:
+    build: .
+    image: agentforge:local
+    init: true
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      DATABASE_PATH: /app/data/agentforge.db
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:${HOST_PORT:-3000}:3000"
+    volumes:
+      - agentforge-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+  worker:
+    image: agentforge:local
+    init: true
+    restart: unless-stopped
+    env_file: .env.docker
+    environment:
+      DATABASE_PATH: /app/data/agentforge.db
+      NODE_ENV: production
+    command: ["npm", "run", "worker"]
+    volumes:
+      - agentforge-data:/app/data
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "const D=require('better-sqlite3');const d=new D(process.env.DATABASE_PATH,{readonly:true});const r=d.prepare('SELECT id FROM workflow_worker_health WHERE heartbeat>? LIMIT 1').get(Date.now()-30000);d.close();process.exit(r?0:1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    profiles: ["tracking"]
+    restart: unless-stopped
+    command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "sqlite:////mlflow/mlflow.db", "--default-artifact-root", "/mlflow/artifacts", "--allowed-hosts", "mlflow:5000,localhost:5000,127.0.0.1:5000"]
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+volumes:
+  agentforge-data:
+  mlflow-data:
