@@ -41,6 +41,7 @@ export const executeNode: NodeExecutor = async (node, ctx) => {
     await workflowStore.credential(String(c.credentialId), kind);
   switch (node.kind) {
     case "manual":
+    case "formTrigger":
     case "webhook":
     case "telegramTrigger":
     case "emailTrigger":

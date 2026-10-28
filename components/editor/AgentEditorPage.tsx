@@ -38,7 +38,7 @@ import {
 import { toast } from "sonner";
 import { useAccount } from "@/lib/hooks/useAccount";
 
-const DRAFT_KEY = (owner: string, id: string) => `m4m:draft:${owner}:${id}`;
+const DRAFT_KEY = (owner: string, id: string) => `m8m:draft:${owner}:${id}`;
 
 interface AgentFormState {
   name: string;

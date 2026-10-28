@@ -92,7 +92,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
     return (
       <main className="m4m-auth">
         <div className="m4m-auth-brand-row">
-          <Link href="/workflows" aria-label="m4m home">
+          <Link href="/workflows" aria-label="m8m home">
             <Brand />
           </Link>
           <MotionToggle className="m4m-auth-motion" />
@@ -160,7 +160,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <Link
           href="/workflows"
           className="forge-brand"
-          aria-label="m4m home"
+          aria-label="m8m home"
           onClick={() => setMenuOpen(false)}
         >
           <Brand compact={compact} />

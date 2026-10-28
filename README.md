@@ -1,6 +1,6 @@
-# m4m
+# m8m
 
-m4m builds reusable Gemini agents and connects them into visual automations. The workflow editor uses **React Flow (`@xyflow/react`)** with draggable nodes, connections, zoom, a minimap, configuration panels, and execution highlighting. A separate worker executes durable jobs; this is a working backend, not just a canvas.
+m8m builds reusable Gemini agents and connects them into visual automations. The workflow editor uses **React Flow (`@xyflow/react`)** with draggable nodes, connections, zoom, a minimap, configuration panels, and execution highlighting. A separate worker executes durable jobs; this is a working backend, not just a canvas.
 
 For **free personal Vercel + Turso hosting**, follow [the serverless deployment guide](docs/free-deployment.md). Telegram runs on incoming messages; an authenticated external scheduler checks Gmail. A dedicated worker remains optional. Registration/login are required locally too. Only unclaimed legacy records need the operator claim command; already-owned accounts survive a database import with their existing login.
 
@@ -8,7 +8,7 @@ For **free personal Vercel + Turso hosting**, follow [the serverless deployment 
 
 - Build agents with prompts, typed inputs, resources, API tools, custom JavaScript, output validation, playground, versions, and per-agent API keys.
 - Create, import/export, duplicate, save, restore, activate, and run workflows. Reference previous outputs and inspect each step's input/output/error.
-- Use 15 node types: manual/webhook/Telegram/email/X triggers; existing agents/Gemini prompts; conditions/routers/transforms; HTTP/custom tools/Telegram/SMTP/X actions.
+- Use 16 node types: manual/webhook/HTML form/Telegram/email/X triggers; existing agents/Gemini prompts; conditions/routers/transforms; HTTP/custom tools/Telegram/SMTP/X actions.
 - Run asynchronously, view history, cancel supported operations, and explicitly retry failures. Active triggers use pinned versions; edits stay in drafts.
 - Encrypt integration credentials, isolate accounts with password login, and optionally track execution metrics in MLflow.
 
@@ -121,3 +121,7 @@ Graphs have one trigger, no cycles, up to 100 nodes/300 edges. Joins receive act
 This initial automation platform is not full n8n parity. Teams/RBAC, OAuth linking, loops, scheduled triggers, streaming AI output, distributed queues and vector RAG remain future work. The existing JSON validator supports a subset of JSON Schema. The architecture document describes those boundaries.
 
 For "Cannot connect to API", verify the server's Google key/model access, DNS, network/proxy/firewall settings and provider status. For queued workflows start the worker and check `/api/health` for `workerOnline: true`. For silent polling triggers inspect the trigger-status API and saved credentials.
+
+## Delivery pack
+
+See [requirement audit and handover](docs/delivery-checklist.md), [26-case acceptance grid](docs/acceptance-grid.csv), [data dictionary](docs/data-dictionary.md), and [service architecture](docs/service-architecture.md). New HTML form and mailbox-contact draft templates are available in the template picker.

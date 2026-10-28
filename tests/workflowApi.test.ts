@@ -29,6 +29,11 @@ import {
 } from "@/app/api/workflows/[[...path]]/route";
 import { POST as hook } from "@/app/api/workflow-hooks/[id]/route";
 import { POST as runAction } from "@/app/api/workflow-runs/[id]/route";
+import {
+  GET as formPage,
+  POST as submitForm,
+} from "@/app/api/workflow-forms/[id]/route";
+import { formToken } from "@/lib/workflows/forms";
 const ctx = (...path: string[]) => ({ params: Promise.resolve({ path }) });
 const req = (
   body: unknown,
@@ -55,6 +60,85 @@ beforeEach(async () => {
   );
 });
 describe("workflow API", () => {
+  it("publishes a form, validates fields and deduplicates double submissions", async () => {
+    const oldSecret = process.env.APP_SECRET;
+    process.env.APP_SECRET = "form-integration-test-secret-32-characters";
+    try {
+      const w = await workflowStore.save({
+        name: "Form",
+        description: "",
+        graph: {
+          nodes: [
+            {
+              id: "form",
+              kind: "formTrigger",
+              label: "Form",
+              position: { x: 0, y: 0 },
+              config: {
+                title: "Request",
+                fields: [
+                  {
+                    name: "text",
+                    label: "Message",
+                    type: "textarea",
+                    required: true,
+                  },
+                ],
+              },
+              retry: { attempts: 1, delayMs: 1000 },
+              timeoutMs: 30000,
+            },
+          ],
+          edges: [],
+        },
+      });
+      const context = { params: Promise.resolve({ id: w.id }) };
+      expect(
+        (await formPage(new Request("http://localhost:3000"), context)).status,
+      ).toBe(404);
+      await workflowStore.activate(w.id, true);
+      const page = await formPage(
+        new Request("http://localhost:3000"),
+        context,
+      );
+      expect(page.status).toBe(200);
+      expect(page.headers.get("referrer-policy")).toBe("same-origin");
+      expect(await page.text()).toContain('name="text"');
+      const token = formToken(w.id, 1);
+      const submission = (
+        text: string,
+        signed = token,
+        origin = "http://localhost:3000",
+      ) =>
+        new Request(`http://localhost:3000/api/workflow-forms/${w.id}`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            origin,
+          },
+          body: new URLSearchParams({ token: signed, text }),
+        });
+      expect(
+        (await submitForm(submission("hello", "invalid"), context)).status,
+      ).toBe(400);
+      expect((await submitForm(submission(""), context)).status).toBe(400);
+      expect(
+        (
+          await submitForm(
+            submission("hello", token, "https://evil.test"),
+            context,
+          )
+        ).status,
+      ).toBe(403);
+      expect(await workflowStore.runs(w.id)).toHaveLength(0);
+      expect((await submitForm(submission("hello"), context)).status).toBe(202);
+      expect((await submitForm(submission("hello"), context)).status).toBe(202);
+      expect(await workflowStore.runs(w.id)).toHaveLength(1);
+    } finally {
+      if (oldSecret === undefined) delete process.env.APP_SECRET;
+      else process.env.APP_SECRET = oldSecret;
+    }
+  });
   it("creates and lists workflows", async () => {
     const r = await POST(
       req({ name: "API test", graph: templates[1].graph }),

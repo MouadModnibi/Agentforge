@@ -1,12 +1,12 @@
-# m4m architecture
+# m8m architecture
 
-m4m combines reusable Gemini agents with a visual automation workspace. The original agent editor, playground, run APIs, resource storage, version history, and provider abstraction remain in place.
+m8m combines reusable Gemini agents with a visual automation workspace. The original agent editor, playground, run APIs, resource storage, version history, and provider abstraction remain in place.
 
 ## Existing architecture, verified from code
 
-Next.js 16.3.7 App Router and React 19.2.8 serve the UI and HTTP APIs. Tailwind v4, Radix/shadcn components, Monaco, and TanStack Query provide styling, forms, code editing, and server state. Zod schemas define agent/request validation. SQLite (`better-sqlite3`, WAL, foreign keys) and Drizzle store agents, agent_versions, resources, and runs. `lib/runtime/runAgent.ts` invokes Google through AI SDK 7, builds prompts, executes tools, validates JSON, optionally repairs output, and collects traces and token usage. Resources are injected as full text; there is no vector database or implemented RAG system.
+Next.js 16.3.7 App Router and React 19.2.8 serve the UI and HTTP APIs. Tailwind v4, Radix/shadcn components, Monaco, and TanStack Query provide styling, forms, code editing, and server state. Zod schemas define agent/request validation. SQLite/libSQL (`@libsql/client`, local WAL or hosted Turso) and Drizzle store agents, agent_versions, resources, and runs. `lib/runtime/runAgent.ts` invokes Google through AI SDK 7, builds prompts, executes tools, validates JSON, optionally repairs output, and collects traces and token usage. Resources are injected as full text; there is no vector database or implemented RAG system.
 
-The original application had no user login or workspace authorization. Only agent run endpoints had optional per-agent API keys. Its queue was an in-process LLM rate limiter, not a durable job queue. Database setup used inline CREATE TABLE statements. No Docker deployment, visual workflow implementation, integration trigger worker, or API specification existed. README claims about streaming, complete JSON Schema enforcement, response-size bounds, and a custom sandbox network bridge exceeded the implementation. Workflow delivery adds real execution/storage infrastructure and documents the remaining limits rather than relying on those claims.
+Current workspaces require scrypt password login and owner-scoped sessions. Accounts own workflows, agents, encrypted integration credentials and Gemini keys. The SQL durable queue supports a separate worker or bounded serverless invocations. The LLM rate limiter is separate from this durable queue. See service-architecture.md for the shared-database deployment decision, free-deployment.md for Vercel/Turso operation, and delivery-checklist.md for acceptance evidence.
 
 ## Components and boundaries
 

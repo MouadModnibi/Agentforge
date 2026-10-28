@@ -1,0 +1,27 @@
+﻿ID,Area,Scenario,Expected result,Actual status,Evidence
+TC-01,Accounts,Registration and password login,Private authenticated session,PASS - automated,accounts.test.ts
+TC-02,Authentication,Invalid credentials/session,Access rejected,PASS - automated,accounts.test.ts
+TC-03,Ownership,Second account requests another workspace,No cross-owner access,PASS - automated,accounts.test.ts
+TC-04,CRUD,Create/read/update/delete workflow,Expected data and status,PASS - automated,workflowApi.test.ts
+TC-05,Graph,"Invalid DAG, missing nodes, cycles",Validation rejection,PASS - automated,workflowGraph.test.ts
+TC-06,Versions,Edit after activation,Active revision remains pinned,PASS - automated,workflowStore.test.ts
+TC-07,Branches,High and low priority,Only selected branch executes,PASS - automated,workflowEngine.test.ts
+TC-08,Bindings,Nested and unsafe paths,Typed safe values; unsafe paths rejected,PASS - automated,workflowGraph.test.ts
+TC-09,Queue,Two consumers claim same job,Only one successful claim,PASS - automated,workflowStore.test.ts
+TC-10,Idempotency,Repeat provider event,One execution per event key,PASS - automated,workflowStore.test.ts
+TC-11,Retry,Retry failed execution,Explicit acknowledgement and saved graph,PASS - automated,workflowApi.test.ts
+TC-12,Timeout,Slow node,Bounded terminal failure,PASS - automated,workflowEngine.test.ts
+TC-13,Cancellation,Cancel running/queued job,Cancellation reflected without replay,PASS - automated,workflowEngine.test.ts
+TC-14,Credentials,Save/list encrypted integration secret,No plaintext in metadata API,PASS - automated,workflowStore.test.ts
+TC-15,Telegram,Mock bot send,Correct destination and payload,PASS - automated,workflowExecutors.test.ts
+TC-16,Gmail,Baseline then new UID,New mail enqueued; historical mail skipped,PASS - automated,workflowTriggers.test.ts
+TC-17,X/Twitter,Mentions and pagination,Durable cursors and provider failures handled,PASS - automated,workflowTriggers.test.ts
+TC-18,MLflow,Mock tracking and outage,Metrics only; failure isolation,PASS - automated,workflowTracking.test.ts
+TC-19,Form HTML,Malicious title/label,Escaped text and safe fields,PASS - automated,workflowForms.test.ts
+TC-20,Form signature,Wrong workflow/revision/expiry/tamper,Rejected signed token,PASS - automated,workflowForms.test.ts
+TC-21,Form fields,Required/email/duplicate/prototype,Valid declared fields only,PASS - automated,workflowForms.test.ts
+TC-22,Form integration,"Inactive, cross-origin and repeat POST",404/403; one accepted queued run,PASS - automated,workflowApi.test.ts
+TC-23,Plain text,Multiline French job description,JSON safely wrapped without rewriting,PASS - automated,workflowRunInput.test.ts
+TC-24,PDF,"FR/EN, long content, redaction",Valid paginated A4 PDF; review required,PASS - automated,textPdf.test.ts
+TC-25,Live providers,Real Telegram/Gmail/X plus tracking,Delivery and provider logs verified,NOT RUN - external/manual,Manual external acceptance
+TC-26,Release,Deploy m8m and publish sample form,"Brand, mobile form submit and execution verified",NOT RUN - external/manual,Manual deployed acceptance

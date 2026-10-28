@@ -91,7 +91,7 @@ function OpenCommandPalette({ onClose }: { onClose: () => void }) {
             <Command.Input
               value={query}
               onValueChange={setQuery}
-              placeholder="Search m4m..."
+              placeholder="Search m8m..."
               className="flex-1 py-3 text-sm bg-transparent outline-none placeholder:text-muted-foreground"
               autoFocus
             />

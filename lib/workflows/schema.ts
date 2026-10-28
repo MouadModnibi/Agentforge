@@ -1,6 +1,7 @@
 import { z } from "zod";
 export const nodeKinds = [
   "manual",
+  "formTrigger",
   "webhook",
   "telegramTrigger",
   "emailTrigger",

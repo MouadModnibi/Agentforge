@@ -1,6 +1,6 @@
 ---
 version: alpha
-name: m4m Signal desk
+name: m8m Signal desk
 description: A private automation workbench with readable routing diagrams and instrument-like controls.
 colors:
   background: "#14171b"
@@ -50,11 +50,11 @@ components:
     textColor: "{colors.danger}"
 ---
 
-# m4m design system
+# m8m design system
 
 ## Overview
 
-m4m helps individuals connect email and messaging services, build reusable AI agents, and inspect automation executions. This is a product surface, not a marketing site. Evidence: README.md, docs/api.md, and existing React Flow editor. English is the current interface language; user content may use any script. No Japan-specific market scope is established.
+m8m helps individuals connect email and messaging services, build reusable AI agents, and inspect automation executions. This is a product surface, not a marketing site. Evidence: README.md, docs/api.md, and existing React Flow editor. English is the current interface language; user content may use any script. No Japan-specific market scope is established.
 
 The reference is a signal-routing desk: quiet equipment surfaces, labelled ports, clear active paths. The memorable signature is a **route strip**: actual saved workflow nodes connected in a compact readable sequence, with explicit branch annotations. Drafts never look as though they are executing. The canvas remains central; configuration stays on the right.
 

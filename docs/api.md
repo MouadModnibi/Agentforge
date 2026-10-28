@@ -1,4 +1,4 @@
-# m4m HTTP API
+# m8m HTTP API
 
 Base URL: the running app, normally `http://localhost:3000`. All JSON requests use `Content-Type: application/json`. Success normally returns `{data: ...}`; errors return `{error:{code,message,details?}}`. The legacy public agent-run endpoint returns its result directly. Health is also an unwrapped object. See [OpenAPI](openapi.json) for machine-readable operations and [examples](api-examples.md).
 
@@ -95,3 +95,9 @@ These remain available and protected by admin authentication except the public r
 Agent create/update schema is defined in `lib/schemas/agent.ts`: name, description, status, config (model, systemPrompt, temperature, maxTokens, inputParams, outputFormat, outputSchema, strictValidation, maxIterations, repairRetries, timeoutMs), externalApis and optional customTool. Typed input params support string/number/boolean/json/file plus required/default. Tool APIs use id/name/baseUrl/method/headers/queryTemplate/bodyTemplate/description/secretKeys. Resource uploads inject full text, not vector retrieval. Agent version restoration is a client-driven PATCH of the saved snapshot, not a distinct restore HTTP endpoint.
 
 Agent execution is synchronous at the existing endpoint; workflow execution is asynchronous. A legacy agent response can have `valid:false` even with HTTP200, so check validity and trace. The playground response additionally includes its error. Provider configuration and quota errors are surfaced through execution results.
+
+## Published HTML forms and scheduler
+
+GET /api/workflow-forms/{id} renders only an active formTrigger with escaped labels and declared fields. POST accepts URL-encoded fields and the signed hidden token; checks origin, expiry/revision, field types and required values; maximum 32 KB. Repeated submission of the same form token enqueues only one event. HTTP 202 acknowledges submission, not execution success. Form activation is deliberate public publishing; submissions can trigger downstream actions. Do not publish private profile data or secrets.
+
+POST /api/automation/tick requires Bearer CRON_SECRET and serverless runtime, returns 202 immediately and schedules bounded polling/queue processing. GET /api/health also reports runtime and last scheduler tick. A recent tick is not proof of successful integrations.

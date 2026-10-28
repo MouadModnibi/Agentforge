@@ -14,7 +14,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
   return (
     <div className="m4m-auth-layout">
       <aside className="m4m-auth-story">
-        <p className="m4m-account-eyebrow">M4M / AUTOMATION STUDIO</p>
+        <p className="m4m-account-eyebrow">M8M / AUTOMATION STUDIO</p>
         <h2>
           A clear path
           <br />
@@ -175,7 +175,7 @@ export function AuthForm({ register = false }: { register?: boolean }) {
           </Button>
         </form>
         <p className="m4m-account-switch">
-          {register ? "Already have an account?" : "New to m4m?"}{" "}
+          {register ? "Already have an account?" : "New to m8m?"}{" "}
           <Link href={register ? "/login" : "/register"}>
             {register ? "Sign in" : "Create an account"}
           </Link>

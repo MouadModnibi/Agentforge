@@ -22,7 +22,7 @@ export function Brand({
           <circle cx="25" cy="9" r="3" fill="currentColor" />
         </svg>
       </span>
-      {!compact && <span className="m4m-wordmark">m4m</span>}
+      {!compact && <span className="m4m-wordmark">m8m</span>}
     </span>
   );
 }

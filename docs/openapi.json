@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "m4m API",
+    "title": "m8m API",
     "version": "1.0.0",
     "description": "Private user workspaces and asynchronous workflow execution. Detailed semantics in docs/api.md."
   },
@@ -13,7 +13,7 @@
   "paths": {
     "/api/auth": {
       "post": {
-        "summary": "Sign in",
+        "summary": "Sign in with email and password",
         "operationId": "post_api_auth",
         "security": [],
         "parameters": [],
@@ -48,7 +48,8 @@
                   "type": "object",
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/Success"
+                      "type": "object",
+                      "additionalProperties": true
                     }
                   },
                   "required": [
@@ -71,7 +72,7 @@
         }
       },
       "get": {
-        "summary": "Read current account",
+        "summary": "Read current session",
         "operationId": "get_api_auth",
         "security": [],
         "parameters": [],
@@ -85,15 +86,7 @@
                   "properties": {
                     "data": {
                       "type": "object",
-                      "properties": {
-                        "user": {
-                          "type": [
-                            "object",
-                            "null"
-                          ]
-                        }
-                      },
-                      "required": []
+                      "additionalProperties": true
                     }
                   },
                   "required": [
@@ -116,9 +109,13 @@
         }
       },
       "delete": {
-        "summary": "Sign out",
+        "summary": "Sign out and revoke session",
         "operationId": "delete_api_auth",
-        "security": [],
+        "security": [
+          {
+            "adminSession": []
+          }
+        ],
         "parameters": [],
         "responses": {
           "200": {
@@ -154,7 +151,7 @@
     },
     "/api/auth/register": {
       "post": {
-        "summary": "Register a private account",
+        "summary": "Register a private account when registration is enabled",
         "operationId": "post_api_auth_register",
         "security": [],
         "parameters": [],
@@ -194,24 +191,7 @@
                   "properties": {
                     "data": {
                       "type": "object",
-                      "properties": {
-                        "user": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string"
-                            },
-                            "name": {
-                              "type": "string"
-                            },
-                            "email": {
-                              "type": "string"
-                            }
-                          },
-                          "required": []
-                        }
-                      },
-                      "required": []
+                      "additionalProperties": true
                     }
                   },
                   "required": [
@@ -236,7 +216,7 @@
     },
     "/api/account": {
       "get": {
-        "summary": "Read private model-key availability",
+        "summary": "Read account metadata without model key values",
         "operationId": "get_api_account",
         "security": [
           {
@@ -254,12 +234,7 @@
                   "properties": {
                     "data": {
                       "type": "object",
-                      "properties": {
-                        "hasGeminiKey": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": []
+                      "additionalProperties": true
                     }
                   },
                   "required": [
@@ -282,7 +257,7 @@
         }
       },
       "patch": {
-        "summary": "Save or clear your encrypted Gemini key",
+        "summary": "Update account model settings",
         "operationId": "patch_api_account",
         "security": [
           {
@@ -296,14 +271,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {
-                  "geminiKey": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "geminiKey"
-                ]
+                "additionalProperties": true
               }
             }
           }
@@ -318,12 +286,7 @@
                   "properties": {
                     "data": {
                       "type": "object",
-                      "properties": {
-                        "hasGeminiKey": {
-                          "type": "boolean"
-                        }
-                      },
-                      "required": []
+                      "additionalProperties": true
                     }
                   },
                   "required": [
@@ -2582,6 +2545,141 @@
           }
         }
       }
+    },
+    "/api/automation/tick": {
+      "post": {
+        "summary": "Schedule bounded polling and queue processing; requires CRON_SECRET bearer",
+        "operationId": "post_api_automation_tick",
+        "security": [
+          {
+            "schedulerBearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "202": {
+            "description": "Execution queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "See docs/api.md for authentication, validation and execution error semantics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workflow-forms/{id}": {
+      "get": {
+        "summary": "Render active public HTML form; no private graph/credential data exposed",
+        "operationId": "get_api_workflow_forms__id_",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published HTML",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Inactive or missing form"
+          }
+        }
+      },
+      "post": {
+        "summary": "Validate signed form submission and enqueue pinned workflow; deduplicates token nonce",
+        "operationId": "post_api_workflow_forms__id_",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Submission accepted, not proof of execution success",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid/expired token or invalid fields"
+          },
+          "403": {
+            "description": "Cross-origin submission"
+          },
+          "413": {
+            "description": "Payload exceeds 32 KB"
+          },
+          "429": {
+            "description": "Rate limit"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2620,6 +2718,7 @@
                       "type": "string",
                       "enum": [
                         "manual",
+                        "formTrigger",
                         "webhook",
                         "telegramTrigger",
                         "emailTrigger",
@@ -2767,6 +2866,7 @@
                   "type": "string",
                   "enum": [
                     "manual",
+                    "formTrigger",
                     "webhook",
                     "telegramTrigger",
                     "emailTrigger",
@@ -3757,6 +3857,11 @@
       }
     },
     "securitySchemes": {
+      "schedulerBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Operator CRON_SECRET; not an account password"
+      },
       "adminSession": {
         "type": "apiKey",
         "in": "cookie",

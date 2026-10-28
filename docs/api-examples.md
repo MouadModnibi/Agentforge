@@ -57,7 +57,7 @@ curl "https://api.telegram.org/bot$BOT_TOKEN/setWebhook" \
   --data-urlencode "secret_token=$WEBHOOK_SECRET"
 ```
 
-This command changes the bot's webhook destination. Send a message to your bot to test delivery. Check provider registration and workflow history. No webhook-registration API call is made automatically by m4m.
+This command changes the bot's webhook destination. Send a message to your bot to test delivery. Check provider registration and workflow history. No webhook-registration API call is made automatically by m8m.
 
 ## Credentials and agents
 

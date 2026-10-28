@@ -23,7 +23,7 @@ export async function createTextPdf(text: string): Promise<Uint8Array> {
     );
   }
   pdf.setTitle("Workflow document");
-  pdf.setCreator("m4m");
+  pdf.setCreator("m8m");
   const [width, height] = PageSizes.A4;
   const margin = 56,
     size = 11,

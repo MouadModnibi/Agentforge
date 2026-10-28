@@ -51,7 +51,7 @@ Create an account at [cron-job.org](https://cron-job.org/en/) and create ONE job
 
 | Setting | Value |
 | --- | --- |
-| Title | m4m Gmail checks |
+| Title | m8m Gmail checks |
 | URL | https://YOUR-STABLE-DOMAIN/api/automation/tick |
 | Schedule | Every 5 minutes |
 | Request method (Advanced) | POST |
@@ -59,7 +59,7 @@ Create an account at [cron-job.org](https://cron-job.org/en/) and create ONE job
 | Custom header value | Bearer YOUR_CRON_SECRET |
 | Body | Empty |
 
-Enable failure notifications and click **Test run**. Expected response: HTTP **202**, `{"accepted":true}`. It acknowledges scheduling, not successful workflow completion. The response is immediate because cron-job.org closes requests after 30 seconds; Next's `after()` continues bounded processing on Vercel. Inspect actual results in m4m execution history and Vercel runtime logs. `/api/health` exposes `schedulerLastTick` and `schedulerHealthy` (arrival within 15 minutes). Recent arrival does not mean all integrations succeeded.
+Enable failure notifications and click **Test run**. Expected response: HTTP **202**, `{"accepted":true}`. It acknowledges scheduling, not successful workflow completion. The response is immediate because cron-job.org closes requests after 30 seconds; Next's `after()` continues bounded processing on Vercel. Inspect actual results in m8m execution history and Vercel runtime logs. `/api/health` exposes `schedulerLastTick` and `schedulerHealthy` (arrival within 15 minutes). Recent arrival does not mean all integrations succeeded.
 
 401 means an absent/wrong/short CRON_SECRET or header. 409 means WORKFLOW_RUNTIME is not serverless. A redirect/login page means deployment protection or the wrong URL is blocking access. Use the public production URL, not a protected preview. Never put the secret in the URL.
 

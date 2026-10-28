@@ -136,7 +136,7 @@ function Editor({ initial }: { initial: Workflow }) {
     [showHistory, setShowHistory] = useState(false),
     [runId, setRunId] = useState<string | null>(null),
     [input, setInput] = useState(
-      '{\n  "text": "Hello from m4m",\n  "priority": "high"\n}',
+      '{\n  "text": "Hello from m8m",\n  "priority": "high"\n}',
     ),
     [drafts, setDrafts] = useState<Record<string, string>>({}),
     [serverErrors, setServerErrors] = useState<string[]>([]),
@@ -824,7 +824,7 @@ function Editor({ initial }: { initial: Workflow }) {
                         <WorkflowTextOutput
                           key={`${run.id}:final`}
                           value={run.output}
-                          filename={`m4m-${run.id.slice(0, 8)}`}
+                          filename={`m8m-${run.id.slice(0, 8)}`}
                         />
                       ) : (
                         <pre>{JSON.stringify(run.output, null, 2)}</pre>
@@ -1039,7 +1039,7 @@ function Editor({ initial }: { initial: Workflow }) {
                                   run.steps.find((s) => s.nodeId === selected)!
                                     .output as string
                                 }
-                                filename={`m4m-${run.id.slice(0, 8)}-${selected}`}
+                                filename={`m8m-${run.id.slice(0, 8)}-${selected}`}
                               />
                             ) : (
                               <pre>
@@ -1170,6 +1170,20 @@ function Editor({ initial }: { initial: Workflow }) {
                     Execute workflow
                   </Button>
                 </>
+              )}
+              {selectedNode?.kind === "formTrigger" && panel === "node" && (
+                <p className="wf-notice">
+                  Save and activate to publish this form. Anyone with its link
+                  can submit answers and start this workflow.{" "}
+                  <a
+                    className="underline"
+                    href={`/api/workflow-forms/${workflow.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Open published form
+                  </a>
+                </p>
               )}
               {panel === "versions" && (
                 <>

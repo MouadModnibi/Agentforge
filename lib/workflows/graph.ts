@@ -1,5 +1,6 @@
 import { GraphSchema, type WorkflowGraph } from "./schema";
 import { isTrigger, outputHandles } from "./catalog";
+import { FormConfig } from "./form-config";
 export function validateGraph(graph: WorkflowGraph): string[] {
   const parsed = GraphSchema.safeParse(graph);
   if (!parsed.success)
@@ -46,6 +47,13 @@ export function validateGraph(graph: WorkflowGraph): string[] {
         errors.push(`${node.label} is disconnected from the trigger.`);
   }
   for (const node of graph.nodes) {
+    if (
+      node.kind === "formTrigger" &&
+      !FormConfig.safeParse(node.config).success
+    )
+      errors.push(
+        `${node.label}: configure a title and unique valid form fields.`,
+      );
     const c = node.config;
     const needed: Partial<Record<typeof node.kind, string[]>> = {
       agent: ["agentId"],

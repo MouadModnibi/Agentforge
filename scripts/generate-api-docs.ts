@@ -188,10 +188,41 @@ operation(
   200,
   [],
 );
-operation('post','/api/auth/register','Register a private account',object({user:object({id:string,name:string,email:string})}),object({name:string,email:string,password:string},['name','email','password']),201,[]);
-operation('get','/api/auth','Read current account',object({user:{type:['object','null']}}),undefined,200,[]);
-operation('get','/api/account','Read private model-key availability',object({hasGeminiKey:boolean}));
-operation('patch','/api/account','Save or clear your encrypted Gemini key',object({hasGeminiKey:boolean}),object({geminiKey:string},['geminiKey']));
+operation(
+  "post",
+  "/api/auth/register",
+  "Register a private account",
+  object({ user: object({ id: string, name: string, email: string }) }),
+  object({ name: string, email: string, password: string }, [
+    "name",
+    "email",
+    "password",
+  ]),
+  201,
+  [],
+);
+operation(
+  "get",
+  "/api/auth",
+  "Read current account",
+  object({ user: { type: ["object", "null"] } }),
+  undefined,
+  200,
+  [],
+);
+operation(
+  "get",
+  "/api/account",
+  "Read private model-key availability",
+  object({ hasGeminiKey: boolean }),
+);
+operation(
+  "patch",
+  "/api/account",
+  "Save or clear your encrypted Gemini key",
+  object({ hasGeminiKey: boolean }),
+  object({ geminiKey: string }, ["geminiKey"]),
+);
 operation(
   "delete",
   "/api/auth",
@@ -490,10 +521,105 @@ operation(
   object({ apis: array(free), title: string }),
   object({ spec: string }, ["spec"]),
 );
+operation("get", "/api/auth", "Read current session", free, undefined, 200, []);
+operation(
+  "post",
+  "/api/auth",
+  "Sign in with email and password",
+  free,
+  object({ email: string, password: string }, ["email", "password"]),
+  200,
+  [],
+);
+operation("delete", "/api/auth", "Sign out and revoke session");
+operation(
+  "post",
+  "/api/auth/register",
+  "Register a private account when registration is enabled",
+  free,
+  object({ name: string, email: string, password: string }, [
+    "name",
+    "email",
+    "password",
+  ]),
+  201,
+  [],
+);
+operation(
+  "get",
+  "/api/account",
+  "Read account metadata without model key values",
+  free,
+);
+operation("patch", "/api/account", "Update account model settings", free, free);
+operation(
+  "post",
+  "/api/automation/tick",
+  "Schedule bounded polling and queue processing; requires CRON_SECRET bearer",
+  free,
+  undefined,
+  202,
+  [{ schedulerBearer: [] }],
+);
+operation(
+  "get",
+  "/api/workflow-forms/{id}",
+  "Render active public HTML form; no private graph/credential data exposed",
+  string,
+  undefined,
+  200,
+  [],
+  false,
+);
+paths["/api/workflow-forms/{id}"].get = {
+  ...(paths["/api/workflow-forms/{id}"].get as object),
+  responses: {
+    "200": {
+      description: "Published HTML",
+      content: { "text/html": { schema: string } },
+    },
+    "404": { description: "Inactive or missing form" },
+  },
+};
+operation(
+  "post",
+  "/api/workflow-forms/{id}",
+  "Validate signed form submission and enqueue pinned workflow; deduplicates token nonce",
+  string,
+  undefined,
+  202,
+  [],
+  false,
+);
+Object.assign(paths["/api/workflow-forms/{id}"].post!, {
+  requestBody: {
+    required: true,
+    content: {
+      "application/x-www-form-urlencoded": {
+        schema: {
+          type: "object",
+          properties: { token: string },
+          required: ["token"],
+          additionalProperties: { type: "string" },
+        },
+      },
+    },
+  },
+  responses: {
+    "202": {
+      description: "Submission accepted, not proof of execution success",
+      content: { "text/html": { schema: string } },
+    },
+    "400": { description: "Invalid/expired token or invalid fields" },
+    "403": { description: "Cross-origin submission" },
+    "413": { description: "Payload exceeds 32 KB" },
+    "429": { description: "Rate limit" },
+  },
+});
 const document = {
   openapi: "3.1.0",
   info: {
-    title: "m4m API",
+    title: "m8m API",
     version: "1.0.0",
     description:
       "Private user workspaces and asynchronous workflow execution. Detailed semantics in docs/api.md.",
@@ -503,6 +629,11 @@ const document = {
   components: {
     schemas,
     securitySchemes: {
+      schedulerBearer: {
+        type: "http",
+        scheme: "bearer",
+        description: "Operator CRON_SECRET; not an account password",
+      },
       adminSession: {
         type: "apiKey",
         in: "cookie",

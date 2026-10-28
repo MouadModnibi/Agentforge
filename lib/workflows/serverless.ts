@@ -6,6 +6,7 @@ import { workflowStore } from "./store";
 import { executeGraph } from "./engine";
 import { pollTriggers } from "./triggers";
 import { redact } from "./service";
+import { trackExecution } from "./mlflow";
 import type { NodeRun } from "./schema";
 
 export const serverlessEnabled = () =>
@@ -104,6 +105,7 @@ export async function runServerless(target?: { id: string; ownerId: string }) {
           await redact(result.output),
           result.error ? String(await redact(result.error)) : undefined,
         );
+        await trackExecution((await workflowStore.getRun(run.id))!);
         console.log(
           JSON.stringify({
             event: "serverless.finished",

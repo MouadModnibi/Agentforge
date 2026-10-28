@@ -11,6 +11,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/api/auth") ||
     path === "/api/health" ||
     path.startsWith("/api/workflow-hooks/") ||
+    path.startsWith("/api/workflow-forms/") ||
     /^\/api\/agents\/[^/]+\/run$/.test(path)
   )
     return NextResponse.next();

@@ -1,6 +1,6 @@
-# m4m frontend
+# m8m frontend
 
-m4m uses the **Signal desk** design system: solid graphite surfaces, locally bundled IBM Plex UI/data typography, Barlow Condensed headings, and amber trigger ports. Actual workflow routing is the main visual signature. See [DESIGN.md](../DESIGN.md), [UX-CONTRACT.md](../UX-CONTRACT.md), and [the browser review](design-review.md).
+m8m uses the **Signal desk** design system: solid graphite surfaces, locally bundled IBM Plex UI/data typography, Barlow Condensed headings, and amber trigger ports. Actual workflow routing is the main visual signature. See [DESIGN.md](../DESIGN.md), [UX-CONTRACT.md](../UX-CONTRACT.md), and [the browser review](design-review.md).
 
 ## Structure
 

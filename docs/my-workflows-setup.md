@@ -1,6 +1,6 @@
 # Your Gmail and Telegram workflows
 
-Created for your registered m4m account on 28 October 2026. All three are drafts. Existing workflows were left untouched. No messages were sent and no service credentials were changed.
+Created for your registered m8m account on 28 October 2026. All three are drafts. Existing workflows were left untouched. No messages were sent and no service credentials were changed.
 
 ## Gmail: start here
 
@@ -30,7 +30,7 @@ Connection settings live at http://127.0.0.1:3000/credentials. For a new Gmail c
 ## Telegram: create the bot connection
 
 1. In Telegram open the official **@BotFather** bot, send `/newbot`, and follow its prompts. Keep the resulting bot token private.
-2. In m4m open http://127.0.0.1:3000/credentials → **Add credential**.
+2. In m8m open http://127.0.0.1:3000/credentials → **Add credential**.
 3. Name: **My Telegram bot**. Integration: **Telegram**. Bot token: paste the token from BotFather. Webhook secret: use a new random string of letters/numbers/underscores/hyphens. PowerShell can generate one locally with `[guid]::NewGuid().ToString('N')`. Save the credential. Keep both secret values out of chat.
 4. Open your new bot in Telegram and send `/start`, then `hello`. Bots need you to start the conversation before they can message you.
 5. Obtain your private chat ID using your own bot's getUpdates response. In PowerShell, run this locally (the token is prompted securely, not written literally to command history):
@@ -54,7 +54,7 @@ Open http://127.0.0.1:3000/workflows/2dd33d6d-8e78-4cf3-958d-33d19ca3f8b0
 ```json
 {
   "chatId": "YOUR_CHAT_ID",
-  "text": "Hello Mouad! Your m4m Telegram connection works."
+  "text": "Hello Mouad! Your m8m Telegram connection works."
 }
 ```
 
@@ -71,7 +71,7 @@ Open http://127.0.0.1:3000/workflows/891c30c8-8c63-4152-b24a-3c4dd40f485f
 
 ```powershell
 $publicAppBase = Read-Host 'Public HTTPS app URL, without trailing slash'
-$hookSecretInput = Read-Host 'Webhook secret saved in m4m' -AsSecureString
+$hookSecretInput = Read-Host 'Webhook secret saved in m8m' -AsSecureString
 $hookSecretValue = (New-Object System.Net.NetworkCredential('', $hookSecretInput)).Password
 Invoke-RestMethod -Method Post -Uri ("https://api.telegram.org/bot{0}/setWebhook" -f $botApiToken) -Body @{
   url = "$publicAppBase/api/workflow-hooks/891c30c8-8c63-4152-b24a-3c4dd40f485f"

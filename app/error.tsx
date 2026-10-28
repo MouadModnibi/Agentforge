@@ -9,7 +9,7 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   useEffect(() => {
-    document.title = "Unable to open page · m4m";
+    document.title = "Unable to open page · m8m";
   }, []);
   return (
     <main className="forge-dashboard">

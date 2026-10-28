@@ -23,6 +23,29 @@ const credential: Field = {
   type: "credential",
 };
 export const catalog: Record<NodeKind, NodeDefinition> = {
+  formTrigger: {
+    name: "HTML form trigger",
+    description: "Generate a public form that starts this workflow",
+    category: "Triggers",
+    color: "#e8bf66",
+    icon: "globe",
+    fields: [
+      { key: "title", label: "Form title" },
+      { key: "fields", label: "Form fields", type: "json" },
+    ],
+    defaults: {
+      title: "Send a request",
+      fields: [
+        {
+          name: "text",
+          label: "Your message",
+          type: "textarea",
+          required: true,
+        },
+      ],
+    },
+    outputs: ["out"],
+  },
   manual: {
     name: "Manual trigger",
     description: "Start with the Run button",
@@ -74,7 +97,7 @@ export const catalog: Record<NodeKind, NodeDefinition> = {
     outputs: ["out"],
   },
   agent: {
-    name: "m4m agent",
+    name: "m8m agent",
     description: "Run one of your existing agents",
     category: "AI",
     color: "#b8d2e8",
@@ -233,7 +256,7 @@ export const catalog: Record<NodeKind, NodeDefinition> = {
     defaults: {
       credentialId: "",
       to: "",
-      subject: "m4m workflow",
+      subject: "m8m workflow",
       text: "{{input.text}}",
     },
     outputs: ["out"],

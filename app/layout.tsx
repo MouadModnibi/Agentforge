@@ -10,9 +10,9 @@ import "./visual-effects.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: { default: "m4m — Automation studio", template: "%s · m4m" },
+  title: { default: "m8m — Automation studio", template: "%s · m8m" },
   description:
-    "Build and run workflows, manage AI agents, and connect services in m4m.",
+    "Build and run workflows, manage AI agents, and connect services in m8m.",
   icons: { icon: "/m4m-icon.svg" },
 };
 

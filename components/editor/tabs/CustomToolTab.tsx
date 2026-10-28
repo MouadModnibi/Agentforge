@@ -33,7 +33,7 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ),
 });
 
-const DEFAULT_CODE = `// m4m Custom Tool
+const DEFAULT_CODE = `// m8m Custom Tool
 // Export an async function named \`run\` that receives (args, ctx).
 // ctx.fetch is available for allowed outbound HTTP requests.
 // No require(), no process, no filesystem.
