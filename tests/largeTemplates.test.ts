@@ -23,7 +23,8 @@ import type { WorkflowNode } from "@/lib/workflows/schema";
 function configured(id: string) {
   const graph = structuredClone(largeTemplates.find((t) => t.id === id)!.graph);
   for (const n of graph.nodes) {
-    if (n.kind === "email") n.config.credentialId = "test-smtp";
+    if (["email", "discord"].includes(n.kind))
+      n.config.credentialId = "test-connection";
     if (n.id === "settings") {
       const values = n.config.values as Record<string, unknown>;
       if ("recipient" in values) values.recipient = "owner@example.com";
@@ -37,7 +38,8 @@ function harness(responses: Record<string, unknown>, failAt?: string) {
   const sent: Record<string, unknown>[] = [];
   const requested: string[] = [];
   const executor = async (n: WorkflowNode, ctx: ExecutionContext) => {
-    if (n.kind !== "http" && n.kind !== "email") return executeNode(n, ctx);
+    if (n.kind !== "http" && n.kind !== "email" && n.kind !== "discord")
+      return executeNode(n, ctx);
     const c = resolveBindings(n.config, ctx) as Record<string, unknown>;
     if (n.id === failAt) throw new Error("Provider unavailable");
     if (n.kind === "http") {
@@ -47,6 +49,10 @@ function harness(responses: Record<string, unknown>, failAt?: string) {
       return { output: responses[n.id] };
     }
     sent.push(c);
+    if (n.kind === "discord")
+      return {
+        output: { messageId: "discord-test", channelId: "channel-test" },
+      };
     return { output: { messageId: "smtp-test", accepted: [c.to] } };
   };
   return { executor, sent, requested };
@@ -83,12 +89,13 @@ describe("large workflow templates", () => {
     ]);
     expect(new Set(templates.map((t) => t.id)).size).toBe(templates.length);
     expect(largeTemplates.map((t) => t.graph.nodes.length)).toEqual([
-      24, 20, 18,
+      24, 20, 18, 24,
     ]);
     for (const t of largeTemplates) {
       expect(t.description.length).toBeLessThanOrEqual(1000);
       expect(
-        t.graph.nodes.find((n) => n.kind === "email")?.config.credentialId,
+        t.graph.nodes.find((n) => ["email", "discord"].includes(n.kind))?.config
+          .credentialId,
       ).toBe("");
       expect(
         validateGraph(t.graph).every((e) =>
@@ -161,6 +168,22 @@ describe("large workflow templates", () => {
     expect(r.status, r.error).toBe("succeeded");
     for (const id of ["rain", "wind", "heat"])
       expect(r.steps.find((s) => s.nodeId === id)?.branch).toBe("false");
+  });
+
+  it("posts a complete weather briefing to Discord without any SMTP dependency", async () => {
+    const h = harness(weatherResponses(90, 55, 38));
+    const g = configured("weather-discord-briefing");
+    expect(g.nodes.some((n) => n.kind === "email")).toBe(false);
+    const r = await executeGraph(g, {}, h);
+    expect(r.status, r.error).toBe("succeeded");
+    expect(h.sent).toHaveLength(1);
+    expect(String(h.sent[0].text).length).toBeLessThanOrEqual(2000);
+    for (const city of ["Marrakech", "Casablanca", "Rabat"])
+      expect(h.sent[0].text).toContain(city);
+    expect(r.output).toMatchObject({
+      messageId: "discord-test",
+      channelId: "channel-test",
+    });
   });
 
   it("fails before email when a forecast is unavailable or its expected fields are absent", async () => {

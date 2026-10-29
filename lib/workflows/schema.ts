@@ -14,6 +14,7 @@ export const nodeKinds = [
   "http",
   "customTool",
   "telegram",
+  "discord",
   "email",
   "x",
 ] as const;
@@ -110,7 +111,7 @@ export interface WorkflowRun {
 }
 export const CredentialInputSchema = z.object({
   name: z.string().trim().min(1).max(100),
-  kind: z.enum(["telegram", "email", "x", "http"]),
+  kind: z.enum(["telegram", "email", "x", "http", "discord"]),
   values: z.record(z.string(), z.string().max(8192)),
 });
 export type CredentialInput = z.infer<typeof CredentialInputSchema>;

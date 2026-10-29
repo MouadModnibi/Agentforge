@@ -33,5 +33,9 @@
     "category": "technical",
     "priority": "urgent",
     "text": "I cannot access my account."
+  },
+  "weather-discord-briefing": {},
+  "discord-message-test": {
+    "text": "Hello from m8m! Your Discord connection works."
   }
 }

@@ -61,6 +61,7 @@ export function validateGraph(graph: WorkflowGraph): string[] {
       gemini: ["model", "prompt"],
       http: ["url"],
       telegram: ["credentialId", "chatId", "text"],
+      discord: ["credentialId", "text"],
       email: ["credentialId", "to", "subject", "text"],
       x: ["credentialId", "text"],
       telegramTrigger: ["credentialId"],
@@ -105,7 +106,9 @@ export function validateGraph(graph: WorkflowGraph): string[] {
     )
       errors.push(`${node.label}: invalid HTTP method.`);
     if (
-      ["http", "telegram", "email", "x", "agent"].includes(node.kind) &&
+      ["http", "telegram", "discord", "email", "x", "agent"].includes(
+        node.kind,
+      ) &&
       node.retry.attempts > 1
     )
       errors.push(

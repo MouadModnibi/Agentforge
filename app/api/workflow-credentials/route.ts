@@ -2,6 +2,7 @@ import { withUser } from "@/lib/security/routeAuth";
 import { CredentialInputSchema } from "@/lib/workflows/schema";
 import { workflowStore, StoreError } from "@/lib/workflows/store";
 import { ok, failure, body } from "@/lib/workflows/api";
+import { discordWebhookUrl } from "@/lib/workflows/discord";
 export const GET = withUser(async function GET(request: Request) {
   return ok(await workflowStore.credentials());
 });
@@ -16,6 +17,7 @@ export const POST = withUser(async function POST(request: Request) {
       email: ["imapHost", "smtpHost", "user", "password"],
       x: ["accessToken", "userId"],
       http: [],
+      discord: ["webhookUrl"],
     }[data.kind];
     for (const key of required)
       if (!data.values[key]?.trim())
@@ -27,6 +29,15 @@ export const POST = withUser(async function POST(request: Request) {
       throw new StoreError(
         "Telegram webhook secret must contain 1–256 letters, numbers, underscores or hyphens",
       );
+    if (data.kind === "discord") {
+      try {
+        data.values.webhookUrl = discordWebhookUrl(data.values.webhookUrl);
+      } catch {
+        throw new StoreError(
+          "Use a Discord webhook URL: https://discord.com/api/webhooks/ID/TOKEN",
+        );
+      }
+    }
     if (data.kind === "email") {
       for (const key of ["imapPort", "smtpPort"])
         if (

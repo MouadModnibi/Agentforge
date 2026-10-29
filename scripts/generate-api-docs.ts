@@ -108,7 +108,10 @@ const schemas: Record<string, Schema> = {
   CredentialSummary: object({
     id: string,
     name: string,
-    kind: { type: "string", enum: ["telegram", "email", "x", "http"] },
+    kind: {
+      type: "string",
+      enum: ["telegram", "email", "x", "http", "discord"],
+    },
     createdAt: integer,
   }),
   Agent: object({

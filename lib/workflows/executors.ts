@@ -6,6 +6,7 @@ import { guardedFetch, resolvePublicHost } from "@/lib/security/ssrfGuard";
 import { workflowStore } from "./store";
 import { resolveBindings } from "./graph";
 import type { WorkflowNode } from "./schema";
+import { discordWebhookUrl } from "./discord";
 export interface ExecutionContext {
   input: unknown;
   trigger: unknown;
@@ -37,8 +38,9 @@ function object(value: unknown): Record<string, unknown> {
 export const executeNode: NodeExecutor = async (node, ctx) => {
   ctx.signal.throwIfAborted();
   const c = object(resolveBindings(node.config, ctx));
-  const credential = async (kind: "telegram" | "email" | "x" | "http") =>
-    await workflowStore.credential(String(c.credentialId), kind);
+  const credential = async (
+    kind: "telegram" | "email" | "x" | "http" | "discord",
+  ) => await workflowStore.credential(String(c.credentialId), kind);
   switch (node.kind) {
     case "manual":
     case "formTrigger":
@@ -175,6 +177,65 @@ export const executeNode: NodeExecutor = async (node, ctx) => {
         },
       );
       return { output: await jsonResponse(response) };
+    }
+    case "discord": {
+      const text = String(c.text ?? "");
+      if (!text.trim() || text.length > 2000)
+        throw new Error(
+          "Discord message must contain 1 to 2000 characters. Shorten the Message field.",
+        );
+      const threadId = String(c.threadId ?? "").trim();
+      if (threadId && !/^\d+$/.test(threadId))
+        throw new Error("Discord thread ID must contain only digits.");
+      const secret = await credential("discord");
+      const url = new URL(discordWebhookUrl(secret.webhookUrl ?? ""));
+      url.searchParams.set("wait", "true");
+      if (threadId) url.searchParams.set("thread_id", threadId);
+      let response: Response;
+      try {
+        response = await guardedFetch(url.toString(), {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          signal: ctx.signal,
+          body: JSON.stringify({
+            content: text,
+            allowed_mentions: {
+              parse: [],
+              users: [],
+              roles: [],
+              replied_user: false,
+            },
+          }),
+        });
+      } catch {
+        ctx.signal.throwIfAborted();
+        throw new Error(
+          "Discord request failed. Check the saved webhook and network connection before retrying.",
+        );
+      }
+      if (!response.ok)
+        throw new Error(
+          `Discord returned HTTP ${response.status}. ${response.status === 429 ? "Rate limit reached; wait before retrying." : "Check the saved webhook and channel access."}`,
+        );
+      // Return identifiers only. Never persist a webhook token or provider body.
+      let message: { id?: unknown; channel_id?: unknown };
+      try {
+        message = await response.json();
+      } catch {
+        throw new Error(
+          "Discord did not confirm the message. Check the channel before retrying.",
+        );
+      }
+      if (
+        typeof message?.id !== "string" ||
+        typeof message?.channel_id !== "string"
+      )
+        throw new Error(
+          "Discord did not confirm the message. Check the channel before retrying.",
+        );
+      return {
+        output: { messageId: message.id, channelId: message.channel_id },
+      };
     }
     case "email": {
       const secret = await credential("email");

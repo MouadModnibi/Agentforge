@@ -40,6 +40,13 @@ Desktop sidebar; narrow navigation uses Radix Dialog with Escape, focus trap and
 
 ## Forms and async resilience
 
+Discord channel webhook credentials use the shared SecretInput. Their URL is
+validated on client and server and never embedded in graph configuration. The
+Discord action uses the existing credential selector, disables mentions, requires
+provider confirmation and exposes only message/channel identifiers. No automatic
+retry is offered for this external send. Discord is an outbound action; generic
+Webhook and existing Telegram/email triggers keep their separate meaning.
+
 Workflow templates create inactive drafts through the existing create route. The
 catalog shows actual node counts and required integrations, with larger examples
 first. Setup notes persist in the workflow description under Settings. Templates

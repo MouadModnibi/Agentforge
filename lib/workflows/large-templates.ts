@@ -441,4 +441,68 @@ const support: WorkflowTemplate = {
   }),
 };
 
-export const largeTemplates: WorkflowTemplate[] = [weather, github, support];
+const weatherDiscord: WorkflowTemplate = {
+  ...weather,
+  id: "weather-discord-briefing",
+  name: "Weather desk - three-city Discord briefing",
+  summary:
+    "Fetch three forecasts, check rain, wind and heat, then post one briefing to your Discord channel.",
+  requirements: "Discord webhook · Open-Meteo (no API key)",
+  description:
+    "Post a three-city weather briefing to Discord. Setup: edit Weather settings (city names, coordinates and thresholds); choose a Discord credential on Post weather to Discord. Add it under Credentials → Discord channel webhook using the URL copied from Discord Server settings → Integrations → Webhooks. Save and Run workflow with {} for a one-time test. For daily delivery, activate this Webhook workflow, generate its key in Settings and schedule an authenticated POST to its endpoint. Messages must fit 2000 characters. This sends channel messages; it does not read Discord messages.",
+  graph: GraphSchema.parse({
+    ...weather.graph,
+    nodes: weather.graph.nodes.map((n) => {
+      if (n.id === "settings")
+        return {
+          ...n,
+          config: {
+            values: Object.fromEntries(
+              Object.entries(n.config.values as Record<string, unknown>).filter(
+                ([key]) => key !== "recipient",
+              ),
+            ),
+          },
+        };
+      if (n.id === "email-copy")
+        return {
+          ...n,
+          label: "Compose Discord briefing",
+          config: {
+            values: { text: (n.config.values as Record<string, unknown>).text },
+          },
+        };
+      if (n.id === "send")
+        return {
+          ...n,
+          kind: "discord",
+          label: "Post weather to Discord",
+          config: {
+            credentialId: "",
+            text: "{{nodes.email-copy.text}}",
+            threadId: "",
+          },
+        };
+      if (n.id === "result")
+        return {
+          ...n,
+          label: "Record Discord message",
+          config: {
+            values: {
+              forecastDate: "{{nodes.home-report.date}}",
+              messageId: "{{nodes.send.messageId}}",
+              channelId: "{{nodes.send.channelId}}",
+            },
+          },
+        };
+      return n;
+    }),
+  }),
+};
+
+export const largeTemplates: WorkflowTemplate[] = [
+  weather,
+  github,
+  support,
+  weatherDiscord,
+];

@@ -291,3 +291,43 @@ templates.push({
 });
 
 templates.push(...largeTemplates);
+
+templates.push({
+  id: "discord-message-test",
+  name: "Discord - send a test message",
+  summary:
+    "Send a message to your chosen Discord channel. Start here to test the connection.",
+  description:
+    "Create a Discord channel webhook in Discord Server settings → Integrations → Webhooks; choose a text channel and copy the webhook URL. In m8m Credentials, save a Discord channel webhook credential with this URL. Select it on Post to Discord, save and use Run workflow. Paste any short message in Plain text mode. No activation is needed for this manual test. This action sends messages only; it does not listen to Discord messages. Messages are limited to 2000 characters and mentions are disabled.",
+  requirements: "Discord webhook",
+  input: { text: "Hello from m8m! Your Discord connection works." },
+  graph: graph(
+    [
+      {
+        id: "start",
+        kind: "manual",
+        label: "Test Discord connection",
+        position: { x: 40, y: 180 },
+        config: {},
+      },
+      {
+        id: "message",
+        kind: "transform",
+        label: "Prepare message",
+        position: { x: 340, y: 180 },
+        config: { values: { text: "{{trigger.text}}" } },
+      },
+      {
+        id: "send",
+        kind: "discord",
+        label: "Post to Discord",
+        position: { x: 640, y: 180 },
+        config: { credentialId: "", text: "{{input.text}}", threadId: "" },
+      },
+    ],
+    [
+      { id: "start-message", source: "start", target: "message" },
+      { id: "message-send", source: "message", target: "send" },
+    ],
+  ),
+});

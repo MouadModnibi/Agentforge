@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import type { CredentialInput } from "@/lib/workflows/schema";
+import { discordWebhookUrl } from "@/lib/workflows/discord";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ const credentialFields = {
   ],
   x: ["accessToken", "userId"],
   http: [],
+  discord: ["webhookUrl"],
 };
 const labels: Record<string, string> = {
   botToken: "Bot token",
@@ -53,24 +55,28 @@ const labels: Record<string, string> = {
   from: "Sender email (optional)",
   accessToken: "User access token",
   userId: "Your X user ID",
+  webhookUrl: "Discord webhook URL",
 };
 const kindIcons = {
   telegram: Send,
   email: Mail,
   x: MessageSquare,
   http: Globe,
+  discord: MessageSquare,
 };
 const kindLabels = {
   telegram: "Telegram",
   email: "Email",
   x: "X / Twitter",
   http: "HTTP API",
+  discord: "Discord",
 };
 const requiredFields: Record<CredentialInput["kind"], string[]> = {
   telegram: ["botToken", "webhookSecret"],
   email: ["imapHost", "smtpHost", "user", "password"],
   x: ["accessToken", "userId"],
   http: [],
+  discord: ["webhookUrl"],
 };
 export function CredentialsPage() {
   const confirmAction = useConfirmAction();
@@ -296,6 +302,14 @@ export function CredentialsPage() {
                 )
                   next.smtpPort = "Use TLS port 465 or STARTTLS port 587.";
               }
+              if (kind === "discord" && values.webhookUrl) {
+                try {
+                  discordWebhookUrl(values.webhookUrl);
+                } catch {
+                  next.webhookUrl =
+                    "Use the webhook URL copied from Discord Server settings → Integrations → Webhooks.";
+                }
+              }
               if (Object.keys(next).length) {
                 setFieldErrors(next);
                 (
@@ -368,12 +382,13 @@ export function CredentialsPage() {
               >
                 <option value="telegram">Telegram</option>
                 <option value="email">Email (IMAP + SMTP)</option>
+                <option value="discord">Discord channel webhook</option>
                 <option value="x">X / Twitter</option>
                 <option value="http">HTTP API headers</option>
               </select>
             </label>
             {credentialFields[kind].map((key) => {
-              const FieldInput = /token|secret|password/i.test(key)
+              const FieldInput = /token|secret|password|webhookUrl/i.test(key)
                 ? SecretInput
                 : Input;
               return (
@@ -388,7 +403,7 @@ export function CredentialsPage() {
                       fieldErrors[key] ? `credential-${key}-error` : undefined
                     }
                     autoComplete={
-                      /token|secret|password/i.test(key)
+                      /token|secret|password|webhookUrl/i.test(key)
                         ? "new-password"
                         : "off"
                     }
@@ -447,6 +462,14 @@ export function CredentialsPage() {
               <p className="wf-notice">
                 TLS connections only. Gmail may require an app password. The
                 trigger starts with new mail received after its first poll.
+              </p>
+            )}
+            {kind === "discord" && (
+              <p className="wf-notice">
+                In Discord: Server settings → Integrations → Webhooks → New
+                webhook. Choose a text channel and copy its webhook URL here.
+                This connection sends channel messages; it does not read
+                messages or start a Discord bot.
               </p>
             )}
             {kind === "x" && (

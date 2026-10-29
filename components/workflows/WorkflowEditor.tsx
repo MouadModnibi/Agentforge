@@ -431,7 +431,9 @@ function Editor({ initial }: { initial: Workflow }) {
             ? "email"
             : kind.startsWith("x")
               ? "x"
-              : "http";
+              : kind === "discord"
+                ? "discord"
+                : "http";
       return (
         <>
           <select
@@ -982,9 +984,14 @@ function Editor({ initial }: { initial: Workflow }) {
                       </label>
                     )}
                     {!isTrigger(selectedNode.kind) &&
-                      !["agent", "http", "telegram", "email", "x"].includes(
-                        selectedNode.kind,
-                      ) && (
+                      ![
+                        "agent",
+                        "http",
+                        "telegram",
+                        "discord",
+                        "email",
+                        "x",
+                      ].includes(selectedNode.kind) && (
                         <>
                           <label className="wf-field">
                             <span>Maximum attempts</span>

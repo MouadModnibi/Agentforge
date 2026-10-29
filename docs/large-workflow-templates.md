@@ -1,5 +1,9 @@
 # Large workflow templates
 
+Also available: **Weather desk - three-city Discord briefing (24 nodes)** and
+**Discord - send a test message**. See [Discord setup](discord.md), including
+steps for getting all the email, GitHub and support templates working.
+
 Open **Workflows → Templates**. The largest templates appear first. Selecting one
 creates an inactive draft in your account; credentials are never chosen for you.
 The description under workflow **Settings** contains its setup notes.

@@ -3,7 +3,7 @@ import { workflowStore, StoreError } from "./store";
 import { validateGraph } from "./graph";
 import type { WorkflowGraph } from "./schema";
 import { redactSecrets } from "@/lib/security/redaction";
-import { accountModelKey } from '@/lib/security/accounts';
+import { accountModelKey } from "@/lib/security/accounts";
 export async function validateReferences(graph: WorkflowGraph) {
   const errors = validateGraph(graph);
   const credentials = await workflowStore.credentials();
@@ -21,7 +21,9 @@ export async function validateReferences(graph: WorkflowGraph) {
           ? "email"
           : n.kind.startsWith("x")
             ? "x"
-            : "http";
+            : n.kind === "discord"
+              ? "discord"
+              : "http";
       if (
         !credentials.some(
           (c) => c.id === n.config.credentialId && c.kind === expected,
@@ -45,9 +47,13 @@ export async function redact(value: unknown): Promise<unknown> {
             .filter(
               ([k, v]) =>
                 v.length >= 4 &&
-                (c.kind === "http" || /token|secret|password/i.test(k)),
+                (c.kind === "http" ||
+                  c.kind === "discord" ||
+                  /token|secret|password/i.test(k)),
             )
-            .map(([, v]) => v);
+            .flatMap(([, v]) =>
+              c.kind === "discord" ? [v, v.split("/").at(-1) ?? v] : [v],
+            );
         } catch {
           return [];
         }

@@ -241,6 +241,21 @@ export const catalog: Record<NodeKind, NodeDefinition> = {
     outputs: ["out"],
     sideEffect: true,
   },
+  discord: {
+    name: "Discord message",
+    description: "Post to a Discord channel using a saved webhook",
+    category: "Actions",
+    color: "#9dc6b1",
+    icon: "message",
+    fields: [
+      credential,
+      { key: "text", label: "Message (up to 2000 characters)" },
+      { key: "threadId", label: "Thread ID (optional)" },
+    ],
+    defaults: { credentialId: "", text: "{{input.text}}", threadId: "" },
+    outputs: ["out"],
+    sideEffect: true,
+  },
   email: {
     name: "Send email",
     description: "Deliver an email over SMTP",

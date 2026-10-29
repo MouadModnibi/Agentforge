@@ -47,6 +47,10 @@ The template picker also includes larger **Weather desk (24 nodes)**, **GitHub d
 
 ## Environment
 
+Discord channel messages are supported through encrypted webhook credentials.
+See [Discord and template setup](docs/discord.md) for a connection test, the
+24-node weather-to-Discord template and steps to run the email/form templates.
+
 | Variable                                 | Purpose                                                                |
 | ---------------------------------------- | ---------------------------------------------------------------------- |
 | `GOOGLE_GENERATIVE_AI_API_KEY`           | Legacy migration key only; users save private keys in Account settings |

@@ -5,6 +5,7 @@ vi.mock("@/lib/security/accounts", () => ({
     name: "Test",
   })),
   cookieToken: () => undefined,
+  accountModelKey: async () => null,
 }));
 import { withOwner } from "@/lib/security/owner";
 const it = (name: string, fn: () => unknown) =>
@@ -34,6 +35,11 @@ import {
   POST as submitForm,
 } from "@/app/api/workflow-forms/[id]/route";
 import { formToken } from "@/lib/workflows/forms";
+import {
+  POST as saveConnection,
+  GET as listConnections,
+} from "@/app/api/workflow-credentials/route";
+import { redact, validateReferences } from "@/lib/workflows/service";
 const ctx = (...path: string[]) => ({ params: Promise.resolve({ path }) });
 const req = (
   body: unknown,
@@ -60,6 +66,59 @@ beforeEach(async () => {
   );
 });
 describe("workflow API", () => {
+  it("saves encrypted Discord credentials, filters integration types and redacts URL/token", async () => {
+    const webhookUrl =
+      "https://discord.com/api/webhooks/123/discord-test-token";
+    const response = await saveConnection(
+      req({ name: "Discord QA", kind: "discord", values: { webhookUrl } }),
+    );
+    expect(response.status).toBe(201);
+    const { data } = await response.json();
+    expect(data.kind).toBe("discord");
+    expect(data.values).toBeUndefined();
+    const listed = await listConnections(
+      new Request("http://localhost:3000/api/workflow-credentials"),
+    );
+    expect(await listed.text()).not.toContain("discord-test-token");
+    expect(
+      (
+        await query(
+          "SELECT encrypted FROM workflow_credentials WHERE id=?",
+          data.id,
+        )
+      )[0].encrypted,
+    ).not.toContain("discord-test-token");
+    const graph = structuredClone(
+      templates.find((t) => t.id === "discord-message-test")!.graph,
+    );
+    graph.nodes.find((n) => n.kind === "discord")!.config.credentialId =
+      data.id;
+    expect(await validateReferences(graph)).toEqual([]);
+    await expect(workflowStore.credential(data.id, "http")).rejects.toThrow(
+      "wrong integration type",
+    );
+    const redacted = JSON.stringify(
+      await redact({ url: webhookUrl, fragment: "discord-test-token" }),
+    );
+    expect(redacted).not.toContain("discord-test-token");
+  });
+  it("rejects invalid Discord credential URLs at the API boundary without echoing secrets", async () => {
+    for (const webhookUrl of [
+      "https://evil.test/api/webhooks/123/private-token",
+      "http://discord.com/api/webhooks/123/private-token",
+      "",
+    ]) {
+      const response = await saveConnection(
+        req({
+          name: "Invalid Discord",
+          kind: "discord",
+          values: { webhookUrl },
+        }),
+      );
+      expect(response.status).toBe(400);
+      expect(await response.text()).not.toContain("private-token");
+    }
+  });
   it("publishes a form, validates fields and deduplicates double submissions", async () => {
     const oldSecret = process.env.APP_SECRET;
     process.env.APP_SECRET = "form-integration-test-secret-32-characters";

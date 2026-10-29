@@ -46,6 +46,82 @@ const node = (kind: string, config: unknown) =>
   });
 beforeEach(() => vi.clearAllMocks());
 describe("workflow node executors", () => {
+  it("sends Discord with confirmation, disabled mentions and a server-only webhook", async () => {
+    vi.mocked(workflowStore.credential).mockResolvedValue({
+      webhookUrl: "https://discord.com/api/webhooks/123/test-token",
+    });
+    vi.mocked(guardedFetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({ id: "456", channel_id: "789", token: "never-return" }),
+        { headers: { "content-type": "application/json" } },
+      ),
+    );
+    const r = await executeNode(
+      node("discord", {
+        credentialId: "c",
+        text: "{{input.text}} @everyone",
+        threadId: "999",
+      }),
+      context,
+    );
+    expect(workflowStore.credential).toHaveBeenCalledWith("c", "discord");
+    expect(guardedFetch).toHaveBeenCalledWith(
+      "https://discord.com/api/webhooks/123/test-token?wait=true&thread_id=999",
+      expect.objectContaining({ method: "POST", signal: context.signal }),
+    );
+    const payload = JSON.parse(
+      String(vi.mocked(guardedFetch).mock.calls[0][1]?.body),
+    );
+    expect(payload).toEqual({
+      content: "hello @everyone",
+      allowed_mentions: {
+        parse: [],
+        users: [],
+        roles: [],
+        replied_user: false,
+      },
+    });
+    expect(r).toEqual({ output: { messageId: "456", channelId: "789" } });
+  });
+  it("rejects blank/long Discord messages and invalid thread IDs before accessing credentials", async () => {
+    for (const config of [
+      { text: " " },
+      { text: "x".repeat(2001) },
+      { text: "Hi", threadId: "not-a-number" },
+    ])
+      await expect(
+        executeNode(node("discord", { credentialId: "c", ...config }), context),
+      ).rejects.toThrow("Discord");
+    expect(workflowStore.credential).not.toHaveBeenCalled();
+    expect(guardedFetch).not.toHaveBeenCalled();
+  });
+  it("does not expose the Discord webhook in network errors or provider responses", async () => {
+    const webhookUrl = "https://discord.com/api/webhooks/123/secret-token";
+    vi.mocked(workflowStore.credential).mockResolvedValue({ webhookUrl });
+    vi.mocked(guardedFetch).mockRejectedValueOnce(
+      new Error(`Failed: ${webhookUrl}`),
+    );
+    await expect(
+      executeNode(node("discord", { credentialId: "c", text: "Hi" }), context),
+    ).rejects.toThrow("Discord request failed.");
+    vi.mocked(guardedFetch).mockResolvedValue(
+      new Response("secret-token", { status: 429 }),
+    );
+    await expect(
+      executeNode(node("discord", { credentialId: "c", text: "Hi" }), context),
+    ).rejects.toThrow("HTTP 429. Rate limit reached");
+  });
+  it("requires a Discord message confirmation instead of treating an empty response as success", async () => {
+    vi.mocked(workflowStore.credential).mockResolvedValue({
+      webhookUrl: "https://discord.com/api/webhooks/123/test-token",
+    });
+    vi.mocked(guardedFetch).mockResolvedValue(
+      new Response(null, { status: 204 }),
+    );
+    await expect(
+      executeNode(node("discord", { credentialId: "c", text: "Hi" }), context),
+    ).rejects.toThrow("Discord did not confirm");
+  });
   it("maps typed transform data", async () =>
     expect(
       await executeNode(

@@ -2731,6 +2731,7 @@
                         "http",
                         "customTool",
                         "telegram",
+                        "discord",
                         "email",
                         "x"
                       ]
@@ -2879,6 +2880,7 @@
                     "http",
                     "customTool",
                     "telegram",
+                    "discord",
                     "email",
                     "x"
                   ]
@@ -2997,7 +2999,8 @@
               "telegram",
               "email",
               "x",
-              "http"
+              "http",
+              "discord"
             ]
           },
           "values": {
@@ -3762,7 +3765,8 @@
               "telegram",
               "email",
               "x",
-              "http"
+              "http",
+              "discord"
             ]
           },
           "createdAt": {
