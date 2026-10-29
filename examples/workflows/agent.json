@@ -1,6 +1,6 @@
 {
   "name": "Agent-powered automation",
-  "description": "Turn an existing m4m agent into a reusable flow.",
+  "description": "Turn an existing m8m agent into a reusable flow.",
   "graph": {
     "nodes": [
       {
@@ -49,7 +49,7 @@
         "config": {
           "values": {
             "result": "{{nodes.agent}}",
-            "source": "m4m"
+            "source": "m8m"
           }
         },
         "retry": {

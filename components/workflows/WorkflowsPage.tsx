@@ -214,22 +214,32 @@ export function WorkflowsPage() {
               <DialogHeader>
                 <DialogTitle>Workflow templates</DialogTitle>
                 <DialogDescription>
-                  Choose a starting point for your workflow.
+                  Create a draft, then choose credentials in its action nodes.
+                  Setup notes are saved in the workflow settings.
                 </DialogDescription>
               </DialogHeader>
               <div className="m4m-workflow-template-options">
                 {templates
                   .filter((template) => template.id !== "starter")
+                  .sort((a, b) => b.graph.nodes.length - a.graph.nodes.length)
                   .map((template) => (
                     <button
                       key={template.id}
                       disabled={isCreating}
+                      aria-busy={creating === template.id}
                       onClick={() => create(template.id)}
                     >
                       <WorkflowIcon size={17} />
                       <span>
                         <strong>{template.name}</strong>
-                        <small>{template.description}</small>
+                        <small>
+                          {template.summary ?? template.description}
+                        </small>
+                        <small className="m4m-template-requirements">
+                          {template.graph.nodes.length} nodes
+                          {template.requirements &&
+                            ` · ${template.requirements}`}
+                        </small>
                       </span>
                       {creating === template.id ? (
                         <Loader2 size={14} className="animate-spin" />

@@ -1,0 +1,682 @@
+{
+  "name": "Weather desk - three-city email briefing",
+  "description": "Fetch three city forecasts, compare rain / wind / heat thresholds, merge the advice and email one briefing. Setup: edit Weather settings (recipient, city names, coordinates, thresholds); select an Email credential on Send weather email. No Gemini key needed. Use Run workflow for a one-time test. For a daily email, activate this Webhook workflow and schedule an authenticated POST with body {} to its endpoint using the generated webhook key. Activation alone does not schedule it.",
+  "graph": {
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "webhook",
+        "label": "Start weather briefing",
+        "position": {
+          "x": 40,
+          "y": 380
+        },
+        "config": {},
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "settings",
+        "kind": "transform",
+        "label": "Weather settings - edit me",
+        "position": {
+          "x": 340,
+          "y": 380
+        },
+        "config": {
+          "values": {
+            "recipient": "you@example.com",
+            "homeName": "Marrakech",
+            "homeLat": 31.63,
+            "homeLon": -7.99,
+            "secondName": "Casablanca",
+            "secondLat": 33.59,
+            "secondLon": -7.62,
+            "thirdName": "Rabat",
+            "thirdLat": 34.02,
+            "thirdLon": -6.84,
+            "rainThreshold": 60,
+            "windThreshold": 40,
+            "heatThreshold": 32
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "home-forecast",
+        "kind": "http",
+        "label": "Fetch home city forecast",
+        "position": {
+          "x": 640,
+          "y": 40
+        },
+        "config": {
+          "url": "https://api.open-meteo.com/v1/forecast?latitude={{nodes.settings.homeLat}}&longitude={{nodes.settings.homeLon}}&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto&forecast_days=1",
+          "method": "GET",
+          "headers": {},
+          "credentialId": ""
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "home-report",
+        "kind": "transform",
+        "label": "Read home forecast",
+        "position": {
+          "x": 940,
+          "y": 40
+        },
+        "config": {
+          "values": {
+            "city": "{{nodes.settings.homeName}}",
+            "date": "{{nodes.home-forecast.daily.time.0}}",
+            "current": "{{nodes.home-forecast.current.temperature_2m}}",
+            "high": "{{nodes.home-forecast.daily.temperature_2m_max.0}}",
+            "low": "{{nodes.home-forecast.daily.temperature_2m_min.0}}",
+            "rain": "{{nodes.home-forecast.daily.precipitation_probability_max.0}}",
+            "wind": "{{nodes.home-forecast.daily.wind_speed_10m_max.0}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "second-forecast",
+        "kind": "http",
+        "label": "Fetch second city forecast",
+        "position": {
+          "x": 640,
+          "y": 380
+        },
+        "config": {
+          "url": "https://api.open-meteo.com/v1/forecast?latitude={{nodes.settings.secondLat}}&longitude={{nodes.settings.secondLon}}&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto&forecast_days=1",
+          "method": "GET",
+          "headers": {},
+          "credentialId": ""
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "second-report",
+        "kind": "transform",
+        "label": "Read second forecast",
+        "position": {
+          "x": 940,
+          "y": 380
+        },
+        "config": {
+          "values": {
+            "city": "{{nodes.settings.secondName}}",
+            "date": "{{nodes.second-forecast.daily.time.0}}",
+            "current": "{{nodes.second-forecast.current.temperature_2m}}",
+            "high": "{{nodes.second-forecast.daily.temperature_2m_max.0}}",
+            "low": "{{nodes.second-forecast.daily.temperature_2m_min.0}}",
+            "rain": "{{nodes.second-forecast.daily.precipitation_probability_max.0}}",
+            "wind": "{{nodes.second-forecast.daily.wind_speed_10m_max.0}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "third-forecast",
+        "kind": "http",
+        "label": "Fetch third city forecast",
+        "position": {
+          "x": 640,
+          "y": 720
+        },
+        "config": {
+          "url": "https://api.open-meteo.com/v1/forecast?latitude={{nodes.settings.thirdLat}}&longitude={{nodes.settings.thirdLon}}&current=temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto&forecast_days=1",
+          "method": "GET",
+          "headers": {},
+          "credentialId": ""
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "third-report",
+        "kind": "transform",
+        "label": "Read third forecast",
+        "position": {
+          "x": 940,
+          "y": 720
+        },
+        "config": {
+          "values": {
+            "city": "{{nodes.settings.thirdName}}",
+            "date": "{{nodes.third-forecast.daily.time.0}}",
+            "current": "{{nodes.third-forecast.current.temperature_2m}}",
+            "high": "{{nodes.third-forecast.daily.temperature_2m_max.0}}",
+            "low": "{{nodes.third-forecast.daily.temperature_2m_min.0}}",
+            "rain": "{{nodes.third-forecast.daily.precipitation_probability_max.0}}",
+            "wind": "{{nodes.third-forecast.daily.wind_speed_10m_max.0}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "cities",
+        "kind": "transform",
+        "label": "Combine city reports",
+        "position": {
+          "x": 1240,
+          "y": 380
+        },
+        "config": {
+          "values": {
+            "home": "{{nodes.home-report}}",
+            "second": "{{nodes.second-report}}",
+            "third": "{{nodes.third-report}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "rain",
+        "kind": "condition",
+        "label": "Rain probability above threshold?",
+        "position": {
+          "x": 1540,
+          "y": 40
+        },
+        "config": {
+          "value": "{{nodes.home-report.rain}}",
+          "operator": "greaterThan",
+          "compare": "{{nodes.settings.rainThreshold}}"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "rain-yes",
+        "kind": "transform",
+        "label": "Rain is likely: consider carrying an umbrella.",
+        "position": {
+          "x": 1840,
+          "y": -35
+        },
+        "config": {
+          "values": {
+            "note": "Rain is likely: consider carrying an umbrella."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "rain-no",
+        "kind": "transform",
+        "label": "Rain probability is below your alert threshold.",
+        "position": {
+          "x": 1840,
+          "y": 115
+        },
+        "config": {
+          "values": {
+            "note": "Rain probability is below your alert threshold."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "rain-note",
+        "kind": "transform",
+        "label": "Collect selected advice",
+        "position": {
+          "x": 2140,
+          "y": 40
+        },
+        "config": {
+          "values": {
+            "note": "{{input.note}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "wind",
+        "kind": "condition",
+        "label": "Wind above threshold?",
+        "position": {
+          "x": 1540,
+          "y": 380
+        },
+        "config": {
+          "value": "{{nodes.home-report.wind}}",
+          "operator": "greaterThan",
+          "compare": "{{nodes.settings.windThreshold}}"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "wind-yes",
+        "kind": "transform",
+        "label": "Strong wind is forecast: review outdoor plans.",
+        "position": {
+          "x": 1840,
+          "y": 305
+        },
+        "config": {
+          "values": {
+            "note": "Strong wind is forecast: review outdoor plans."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "wind-no",
+        "kind": "transform",
+        "label": "Wind is below your alert threshold.",
+        "position": {
+          "x": 1840,
+          "y": 455
+        },
+        "config": {
+          "values": {
+            "note": "Wind is below your alert threshold."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "wind-note",
+        "kind": "transform",
+        "label": "Collect selected advice",
+        "position": {
+          "x": 2140,
+          "y": 380
+        },
+        "config": {
+          "values": {
+            "note": "{{input.note}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "heat",
+        "kind": "condition",
+        "label": "High temperature above threshold?",
+        "position": {
+          "x": 1540,
+          "y": 720
+        },
+        "config": {
+          "value": "{{nodes.home-report.high}}",
+          "operator": "greaterThan",
+          "compare": "{{nodes.settings.heatThreshold}}"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "heat-yes",
+        "kind": "transform",
+        "label": "High temperatures are forecast: plan water and shade.",
+        "position": {
+          "x": 1840,
+          "y": 645
+        },
+        "config": {
+          "values": {
+            "note": "High temperatures are forecast: plan water and shade."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "heat-no",
+        "kind": "transform",
+        "label": "Temperature is below your heat threshold.",
+        "position": {
+          "x": 1840,
+          "y": 795
+        },
+        "config": {
+          "values": {
+            "note": "Temperature is below your heat threshold."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "heat-note",
+        "kind": "transform",
+        "label": "Collect selected advice",
+        "position": {
+          "x": 2140,
+          "y": 720
+        },
+        "config": {
+          "values": {
+            "note": "{{input.note}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "email-copy",
+        "kind": "transform",
+        "label": "Compose weather briefing",
+        "position": {
+          "x": 2500,
+          "y": 380
+        },
+        "config": {
+          "values": {
+            "subject": "Weather briefing | {{nodes.home-report.city}} | {{nodes.home-report.date}}",
+            "text": "YOUR WEATHER DESK\n\n{{nodes.home-report.city}} - {{nodes.home-report.date}}\nNow: {{nodes.home-report.current}} C | Low / high: {{nodes.home-report.low}} / {{nodes.home-report.high}} C\nRain probability: {{nodes.home-report.rain}}% | Maximum wind: {{nodes.home-report.wind}} km/h\n\n{{nodes.second-report.city}} - {{nodes.second-report.date}}\nNow: {{nodes.second-report.current}} C | Low / high: {{nodes.second-report.low}} / {{nodes.second-report.high}} C\nRain probability: {{nodes.second-report.rain}}% | Maximum wind: {{nodes.second-report.wind}} km/h\n\n{{nodes.third-report.city}} - {{nodes.third-report.date}}\nNow: {{nodes.third-report.current}} C | Low / high: {{nodes.third-report.low}} / {{nodes.third-report.high}} C\nRain probability: {{nodes.third-report.rain}}% | Maximum wind: {{nodes.third-report.wind}} km/h\n\nHOME CITY PLANNING NOTES\n{{nodes.rain-note.note}}\n{{nodes.wind-note.note}}\n{{nodes.heat-note.note}}\n\nForecasts can change; these threshold checks are not official weather warnings.\nWeather data: Open-Meteo (https://open-meteo.com/), CC BY 4.0.\nSent by your m8m workflow."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "send",
+        "kind": "email",
+        "label": "Send weather email",
+        "position": {
+          "x": 2800,
+          "y": 380
+        },
+        "config": {
+          "credentialId": "",
+          "to": "{{nodes.settings.recipient}}",
+          "subject": "{{nodes.email-copy.subject}}",
+          "text": "{{nodes.email-copy.text}}"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "result",
+        "kind": "transform",
+        "label": "Record SMTP submission",
+        "position": {
+          "x": 3100,
+          "y": 380
+        },
+        "config": {
+          "values": {
+            "recipient": "{{nodes.settings.recipient}}",
+            "forecastDate": "{{nodes.home-report.date}}",
+            "smtp": "{{nodes.send}}",
+            "note": "SMTP acceptance does not guarantee inbox delivery."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      }
+    ],
+    "edges": [
+      {
+        "id": "start-out-settings",
+        "source": "start",
+        "target": "settings",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "settings-out-home-forecast",
+        "source": "settings",
+        "target": "home-forecast",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "home-forecast-out-home-report",
+        "source": "home-forecast",
+        "target": "home-report",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "home-report-out-cities",
+        "source": "home-report",
+        "target": "cities",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "settings-out-second-forecast",
+        "source": "settings",
+        "target": "second-forecast",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "second-forecast-out-second-report",
+        "source": "second-forecast",
+        "target": "second-report",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "second-report-out-cities",
+        "source": "second-report",
+        "target": "cities",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "settings-out-third-forecast",
+        "source": "settings",
+        "target": "third-forecast",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "third-forecast-out-third-report",
+        "source": "third-forecast",
+        "target": "third-report",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "third-report-out-cities",
+        "source": "third-report",
+        "target": "cities",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "cities-out-rain",
+        "source": "cities",
+        "target": "rain",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "cities-out-wind",
+        "source": "cities",
+        "target": "wind",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "cities-out-heat",
+        "source": "cities",
+        "target": "heat",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "rain-true-rain-yes",
+        "source": "rain",
+        "target": "rain-yes",
+        "sourceHandle": "true"
+      },
+      {
+        "id": "rain-false-rain-no",
+        "source": "rain",
+        "target": "rain-no",
+        "sourceHandle": "false"
+      },
+      {
+        "id": "rain-yes-out-rain-note",
+        "source": "rain-yes",
+        "target": "rain-note",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "rain-no-out-rain-note",
+        "source": "rain-no",
+        "target": "rain-note",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "wind-true-wind-yes",
+        "source": "wind",
+        "target": "wind-yes",
+        "sourceHandle": "true"
+      },
+      {
+        "id": "wind-false-wind-no",
+        "source": "wind",
+        "target": "wind-no",
+        "sourceHandle": "false"
+      },
+      {
+        "id": "wind-yes-out-wind-note",
+        "source": "wind-yes",
+        "target": "wind-note",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "wind-no-out-wind-note",
+        "source": "wind-no",
+        "target": "wind-note",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "heat-true-heat-yes",
+        "source": "heat",
+        "target": "heat-yes",
+        "sourceHandle": "true"
+      },
+      {
+        "id": "heat-false-heat-no",
+        "source": "heat",
+        "target": "heat-no",
+        "sourceHandle": "false"
+      },
+      {
+        "id": "heat-yes-out-heat-note",
+        "source": "heat-yes",
+        "target": "heat-note",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "heat-no-out-heat-note",
+        "source": "heat-no",
+        "target": "heat-note",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "rain-note-out-email-copy",
+        "source": "rain-note",
+        "target": "email-copy",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "wind-note-out-email-copy",
+        "source": "wind-note",
+        "target": "email-copy",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "heat-note-out-email-copy",
+        "source": "heat-note",
+        "target": "email-copy",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "email-copy-out-send",
+        "source": "email-copy",
+        "target": "send",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "send-out-result",
+        "source": "send",
+        "target": "result",
+        "sourceHandle": "out"
+      }
+    ]
+  }
+}

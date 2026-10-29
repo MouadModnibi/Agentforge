@@ -1,6 +1,6 @@
 {
   "starter": {
-    "text": "Hello from m4m"
+    "text": "Hello from m8m"
   },
   "routing": {
     "text": "I need help with my account",
@@ -16,5 +16,22 @@
   "email": {
     "subject": "Support request",
     "text": "Please help"
+  },
+  "html-form": {
+    "text": "A sample request"
+  },
+  "mail-contact-draft": {
+    "from": "sender@example.com",
+    "subject": "Contact request",
+    "text": "How can I contact you?"
+  },
+  "weather-email-briefing": {},
+  "github-project-briefing": {},
+  "support-intake-desk": {
+    "name": "Alex",
+    "email": "alex@example.com",
+    "category": "technical",
+    "priority": "urgent",
+    "text": "I cannot access my account."
   }
 }

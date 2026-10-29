@@ -1,0 +1,67 @@
+{
+  "name": "Collect a request with an HTML form",
+  "description": "Publish a form, collect validated answers and inspect the execution. No external API key needed.",
+  "graph": {
+    "nodes": [
+      {
+        "id": "form",
+        "kind": "formTrigger",
+        "label": "Submitted request",
+        "position": {
+          "x": 40,
+          "y": 180
+        },
+        "config": {
+          "title": "Contact our team",
+          "fields": [
+            {
+              "name": "email",
+              "label": "Reply email",
+              "type": "email",
+              "required": true
+            },
+            {
+              "name": "text",
+              "label": "Request",
+              "type": "textarea",
+              "required": true
+            }
+          ]
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "record",
+        "kind": "transform",
+        "label": "Save submitted answers",
+        "position": {
+          "x": 380,
+          "y": 180
+        },
+        "config": {
+          "values": {
+            "email": "{{trigger.email}}",
+            "message": "{{trigger.text}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      }
+    ],
+    "edges": [
+      {
+        "id": "form-record",
+        "source": "form",
+        "target": "record",
+        "sourceHandle": "out"
+      }
+    ]
+  }
+}

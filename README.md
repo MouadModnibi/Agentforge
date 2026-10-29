@@ -43,21 +43,23 @@ Open [Workflows](http://localhost:3000/workflows), click **Try working example**
 
 Optional starter agents: set `SEED_EMAIL` to your registered account, then run `npm run db:seed`. Importable templates are in [examples/workflows](examples/workflows); regenerate with `npm run examples:export`.
 
+The template picker also includes larger **Weather desk (24 nodes)**, **GitHub desk (20 nodes)** and **Support desk (18 nodes)** workflows. See [setup and scheduling instructions](docs/large-workflow-templates.md) for email credentials, city/repository settings and public forms.
+
 ## Environment
 
-| Variable | Purpose |
-|---|---|
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Legacy migration key only; users save private keys in Account settings |
-| `GEMINI_DEFAULT_MODEL` | New agent model; example uses `gemini-3.8-flash` |
-| `LLM_MAX_RPM` | AI requests/minute/process; default 8, configure for your quota |
-| `APP_SECRET` | Stable encryption/signing secret, minimum 32 characters in production |
-| `ALLOW_REGISTRATION` | Set false to close new registrations |
-| `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Shared cloud database connection for Vercel and worker |
-| `APP_URL` | Allowed browser origin; default `http://localhost:3000` |
-| `DATABASE_PATH` | SQLite path; default `data/agentforge.db`; web/worker must match |
-| `TRIGGER_POLL_MS` | IMAP/X polling interval; default 60000 |
-| `WORKFLOW_TIMEOUT_MS` | Total run timeout; default 600000 |
-| `MLFLOW_TRACKING_URI`, `MLFLOW_TOKEN` | Optional tracking server and authentication |
+| Variable                                 | Purpose                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------- |
+| `GOOGLE_GENERATIVE_AI_API_KEY`           | Legacy migration key only; users save private keys in Account settings |
+| `GEMINI_DEFAULT_MODEL`                   | New agent model; example uses `gemini-3.8-flash`                       |
+| `LLM_MAX_RPM`                            | AI requests/minute/process; default 8, configure for your quota        |
+| `APP_SECRET`                             | Stable encryption/signing secret, minimum 32 characters in production  |
+| `ALLOW_REGISTRATION`                     | Set false to close new registrations                                   |
+| `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` | Shared cloud database connection for Vercel and worker                 |
+| `APP_URL`                                | Allowed browser origin; default `http://localhost:3000`                |
+| `DATABASE_PATH`                          | SQLite path; default `data/agentforge.db`; web/worker must match       |
+| `TRIGGER_POLL_MS`                        | IMAP/X polling interval; default 60000                                 |
+| `WORKFLOW_TIMEOUT_MS`                    | Total run timeout; default 600000                                      |
+| `MLFLOW_TRACKING_URI`, `MLFLOW_TOKEN`    | Optional tracking server and authentication                            |
 
 Google documents the default model [here](https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash). Availability and quotas depend on your project; check your provider dashboard.
 

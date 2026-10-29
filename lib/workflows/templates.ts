@@ -1,10 +1,13 @@
 import { GraphSchema, type WorkflowGraph } from "./schema";
+import { largeTemplates } from "./large-templates";
 export interface WorkflowTemplate {
   id: string;
   name: string;
   description: string;
   graph: WorkflowGraph;
   input: Record<string, unknown>;
+  requirements?: string;
+  summary?: string;
 }
 const graph = (nodes: unknown[], edges: unknown[]) =>
   GraphSchema.parse({ nodes, edges });
@@ -286,3 +289,5 @@ templates.push({
     [{ id: "mail-draft", source: "mail", target: "draft" }],
   ),
 });
+
+templates.push(...largeTemplates);

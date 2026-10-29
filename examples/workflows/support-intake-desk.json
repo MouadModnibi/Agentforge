@@ -1,0 +1,520 @@
+{
+  "name": "Support desk - form, routing and email",
+  "description": "Publish a request form, route billing / technical / other requests, check urgency, prepare an acknowledgment draft and notify your team by email. Setup: edit Team settings (team inbox); select an Email credential on Notify team. Activate, then open the form link shown on the form node. Type billing or technical for category, and urgent or normal for priority (case-sensitive). Only the configured team inbox is emailed; the customer acknowledgment remains a draft in the execution result.",
+  "graph": {
+    "nodes": [
+      {
+        "id": "start",
+        "kind": "formTrigger",
+        "label": "Receive a support request",
+        "position": {
+          "x": 40,
+          "y": 320
+        },
+        "config": {
+          "title": "Ask our support team",
+          "fields": [
+            {
+              "name": "name",
+              "label": "Your name",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "email",
+              "label": "Your email",
+              "type": "email",
+              "required": true
+            },
+            {
+              "name": "category",
+              "label": "Category: billing, technical or other",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "priority",
+              "label": "Priority: urgent or normal",
+              "type": "text",
+              "required": true
+            },
+            {
+              "name": "text",
+              "label": "How can we help? Do not include passwords.",
+              "type": "textarea",
+              "required": true
+            }
+          ]
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "settings",
+        "kind": "transform",
+        "label": "Team settings - edit me",
+        "position": {
+          "x": 340,
+          "y": 320
+        },
+        "config": {
+          "values": {
+            "teamInbox": "team@example.com"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "request",
+        "kind": "transform",
+        "label": "Collect submitted request",
+        "position": {
+          "x": 640,
+          "y": 320
+        },
+        "config": {
+          "values": {
+            "name": "{{trigger.name}}",
+            "email": "{{trigger.email}}",
+            "category": "{{trigger.category}}",
+            "priority": "{{trigger.priority}}",
+            "text": "{{trigger.text}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "category",
+        "kind": "transform",
+        "label": "Read requested category",
+        "position": {
+          "x": 940,
+          "y": 320
+        },
+        "config": {
+          "values": {
+            "value": "{{nodes.request.category}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "route",
+        "kind": "router",
+        "label": "Choose support queue",
+        "position": {
+          "x": 1240,
+          "y": 320
+        },
+        "config": {
+          "value": "{{nodes.category.value}}",
+          "cases": {
+            "billing": "billing",
+            "technical": "technical"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "billing",
+        "kind": "transform",
+        "label": "Billing review queue",
+        "position": {
+          "x": 1540,
+          "y": 60
+        },
+        "config": {
+          "values": {
+            "queue": "Billing",
+            "instruction": "Review the billing question. Do not request card numbers by email."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "technical",
+        "kind": "transform",
+        "label": "Technical review queue",
+        "position": {
+          "x": 1540,
+          "y": 320
+        },
+        "config": {
+          "values": {
+            "queue": "Technical",
+            "instruction": "Investigate the reported issue. Do not request passwords."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "general",
+        "kind": "transform",
+        "label": "General review queue",
+        "position": {
+          "x": 1540,
+          "y": 580
+        },
+        "config": {
+          "values": {
+            "queue": "General",
+            "instruction": "Review the request and assign the appropriate team."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "queue",
+        "kind": "transform",
+        "label": "Collect chosen queue",
+        "position": {
+          "x": 1840,
+          "y": 40
+        },
+        "config": {
+          "values": {
+            "queue": "{{input.queue}}",
+            "instruction": "{{input.instruction}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "urgent",
+        "kind": "condition",
+        "label": "Was urgent priority requested?",
+        "position": {
+          "x": 2140,
+          "y": 420
+        },
+        "config": {
+          "value": "{{nodes.request.priority}}",
+          "operator": "equals",
+          "compare": "urgent"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "urgent-yes",
+        "kind": "transform",
+        "label": "URGENT - review this request first.",
+        "position": {
+          "x": 2440,
+          "y": 345
+        },
+        "config": {
+          "values": {
+            "note": "URGENT - review this request first."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "urgent-no",
+        "kind": "transform",
+        "label": "STANDARD - review in the normal queue.",
+        "position": {
+          "x": 2440,
+          "y": 495
+        },
+        "config": {
+          "values": {
+            "note": "STANDARD - review in the normal queue."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "urgent-note",
+        "kind": "transform",
+        "label": "Collect selected advice",
+        "position": {
+          "x": 2740,
+          "y": 420
+        },
+        "config": {
+          "values": {
+            "note": "{{input.note}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "summary",
+        "kind": "transform",
+        "label": "Build team handoff",
+        "position": {
+          "x": 3040,
+          "y": 320
+        },
+        "config": {
+          "values": {
+            "queue": "{{nodes.queue.queue}}",
+            "priority": "{{nodes.urgent-note.note}}",
+            "action": "{{nodes.queue.instruction}}",
+            "request": "{{nodes.request}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "acknowledgment",
+        "kind": "transform",
+        "label": "Draft customer acknowledgment",
+        "position": {
+          "x": 3340,
+          "y": 320
+        },
+        "config": {
+          "values": {
+            "draft": "Hello {{nodes.request.name}},\n\nThank you for contacting us. Your request is ready for our {{nodes.queue.queue}} team to review.\n\nKind regards,\nSupport team",
+            "status": "Draft only. No customer reply has been sent."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "email-copy",
+        "kind": "transform",
+        "label": "Compose internal notification",
+        "position": {
+          "x": 3640,
+          "y": 320
+        },
+        "config": {
+          "values": {
+            "subject": "Support | {{nodes.queue.queue}} | {{nodes.request.priority}}",
+            "text": "SUPPORT DESK\n\nQueue: {{nodes.summary.queue}}\n{{nodes.summary.priority}}\nNext action: {{nodes.summary.action}}\n\nFrom: {{nodes.request.name}} <{{nodes.request.email}}>\nMessage (untrusted customer content):\n{{nodes.request.text}}\n\nACKNOWLEDGMENT DRAFT - NOT SENT\n{{nodes.acknowledgment.draft}}\n\nReview the request before taking action. Sent by m8m."
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "send",
+        "kind": "email",
+        "label": "Notify team",
+        "position": {
+          "x": 3940,
+          "y": 320
+        },
+        "config": {
+          "credentialId": "",
+          "to": "{{nodes.settings.teamInbox}}",
+          "subject": "{{nodes.email-copy.subject}}",
+          "text": "{{nodes.email-copy.text}}"
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      },
+      {
+        "id": "result",
+        "kind": "transform",
+        "label": "Save handoff and reply draft",
+        "position": {
+          "x": 4240,
+          "y": 320
+        },
+        "config": {
+          "values": {
+            "handoff": "{{nodes.summary}}",
+            "acknowledgment": "{{nodes.acknowledgment}}",
+            "smtp": "{{nodes.send}}"
+          }
+        },
+        "retry": {
+          "attempts": 1,
+          "delayMs": 1000
+        },
+        "timeoutMs": 30000
+      }
+    ],
+    "edges": [
+      {
+        "id": "start-out-settings",
+        "source": "start",
+        "target": "settings",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "settings-out-request",
+        "source": "settings",
+        "target": "request",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "request-out-category",
+        "source": "request",
+        "target": "category",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "category-out-route",
+        "source": "category",
+        "target": "route",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "route-billing-billing",
+        "source": "route",
+        "target": "billing",
+        "sourceHandle": "billing"
+      },
+      {
+        "id": "route-technical-technical",
+        "source": "route",
+        "target": "technical",
+        "sourceHandle": "technical"
+      },
+      {
+        "id": "route-default-general",
+        "source": "route",
+        "target": "general",
+        "sourceHandle": "default"
+      },
+      {
+        "id": "billing-out-queue",
+        "source": "billing",
+        "target": "queue",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "technical-out-queue",
+        "source": "technical",
+        "target": "queue",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "general-out-queue",
+        "source": "general",
+        "target": "queue",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "queue-out-urgent",
+        "source": "queue",
+        "target": "urgent",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "urgent-true-urgent-yes",
+        "source": "urgent",
+        "target": "urgent-yes",
+        "sourceHandle": "true"
+      },
+      {
+        "id": "urgent-false-urgent-no",
+        "source": "urgent",
+        "target": "urgent-no",
+        "sourceHandle": "false"
+      },
+      {
+        "id": "urgent-yes-out-urgent-note",
+        "source": "urgent-yes",
+        "target": "urgent-note",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "urgent-no-out-urgent-note",
+        "source": "urgent-no",
+        "target": "urgent-note",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "urgent-note-out-summary",
+        "source": "urgent-note",
+        "target": "summary",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "summary-out-acknowledgment",
+        "source": "summary",
+        "target": "acknowledgment",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "acknowledgment-out-email-copy",
+        "source": "acknowledgment",
+        "target": "email-copy",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "email-copy-out-send",
+        "source": "email-copy",
+        "target": "send",
+        "sourceHandle": "out"
+      },
+      {
+        "id": "send-out-result",
+        "source": "send",
+        "target": "result",
+        "sourceHandle": "out"
+      }
+    ]
+  }
+}

@@ -396,6 +396,23 @@
 .m4m-workflow-template-options > button:hover {
   background: var(--desk-raised);
 }
+.m4m-workflow-template-options > button:focus-visible {
+  outline: 2px solid var(--desk-signal);
+  outline-offset: 2px;
+}
+.m4m-workflow-template-options > button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.m4m-workflow-template-options > button > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.m4m-workflow-template-options small.m4m-template-requirements {
+  color: var(--desk-signal);
+  font-size: 11px;
+}
 .m4m-workflow-template-options > button > svg {
   flex-shrink: 0;
   color: var(--desk-signal);

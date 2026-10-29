@@ -1,6 +1,6 @@
 {
   "name": "Start from scratch",
-  "description": "A manual trigger and a blank canvas. Make it yours.",
+  "description": "An empty workflow with a manual trigger.",
   "graph": {
     "nodes": [
       {

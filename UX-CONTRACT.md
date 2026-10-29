@@ -40,6 +40,13 @@ Desktop sidebar; narrow navigation uses Radix Dialog with Escape, focus trap and
 
 ## Forms and async resilience
 
+Workflow templates create inactive drafts through the existing create route. The
+catalog shows actual node counts and required integrations, with larger examples
+first. Setup notes persist in the workflow description under Settings. Templates
+never select account credentials or activate/schedule themselves. Weather and
+GitHub webhook examples require a separately configured authenticated scheduler
+for recurring delivery; manual Run workflow is a one-time test.
+
 Workflow test input has Plain text and JSON modes. Text-only manual workflows default to Plain text; raw paragraphs, bullets and quotes become the text field without rewriting. Other workflows retain JSON for fields such as chatId/priority. The two drafts remain separate when switching. Invalid input is explained inline and focused before any workflow save or enqueue request.
 
 Product forms use noValidate and app-owned validation, field labels, textual errors and first-invalid focus. Existing Zod schemas remain canonical for agent validation; credential/auth forms use existing API constraints. Password and secret controls mask by default with a reveal toggle. Textareas cannot be manually resized; long editors use sufficient height and internal scroll. Pending actions preserve geometry and values. Failures never imply a successful save. Queued executions are not automatically retried because external sends may duplicate.
