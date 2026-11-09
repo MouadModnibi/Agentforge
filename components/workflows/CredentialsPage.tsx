@@ -1,16 +1,17 @@
 "use client";
 import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { KeyRound, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import {
-  KeyRound,
-  Plus,
-  ShieldCheck,
-  Trash2,
-  Send,
-  Mail,
-  Globe,
-  MessageSquare,
-} from "lucide-react";
+  TelegramLogo,
+  EmailLogo,
+  XLogo,
+  HttpLogo,
+  DiscordLogo,
+  SlackLogo,
+  NotionLogo,
+  GitHubLogo,
+} from "@/components/workflows/NodeIcons";
 import { useCredentials, workflowFetch } from "@/lib/hooks/useWorkflows";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,21 +29,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-const credentialFields = {
+
+const credentialFields: Record<CredentialInput["kind"], string[]> = {
   telegram: ["botToken", "webhookSecret"],
-  email: [
-    "imapHost",
-    "imapPort",
-    "smtpHost",
-    "smtpPort",
-    "user",
-    "password",
-    "from",
-  ],
+  email: ["imapHost", "imapPort", "smtpHost", "smtpPort", "user", "password", "from"],
   x: ["accessToken", "userId"],
   http: [],
   discord: ["webhookUrl"],
+  slack: ["botToken"],
+  notion: ["apiKey"],
+  github: ["personalAccessToken"],
 };
+
 const labels: Record<string, string> = {
   botToken: "Bot token",
   webhookSecret: "Webhook secret",
@@ -56,27 +54,33 @@ const labels: Record<string, string> = {
   accessToken: "User access token",
   userId: "Your X user ID",
   webhookUrl: "Discord webhook URL",
+  apiKey: "Notion API key",
+  personalAccessToken: "GitHub personal access token",
 };
-const kindIcons = {
-  telegram: Send,
-  email: Mail,
-  x: MessageSquare,
-  http: Globe,
-  discord: MessageSquare,
+
+const kindMeta: Record<
+  CredentialInput["kind"],
+  { label: string; Logo: React.ComponentType<{ size?: number }>; color: string }
+> = {
+  telegram: { label: "Telegram",          Logo: TelegramLogo, color: "#29B6F6" },
+  email:    { label: "Email",              Logo: EmailLogo,    color: "#EA4335" },
+  x:        { label: "X / Twitter",        Logo: XLogo,        color: "#000"    },
+  http:     { label: "HTTP API",           Logo: HttpLogo,     color: "#9dc6b1" },
+  discord:  { label: "Discord",            Logo: DiscordLogo,  color: "#5865F2" },
+  slack:    { label: "Slack",              Logo: SlackLogo,    color: "#4A154B" },
+  notion:   { label: "Notion",             Logo: NotionLogo,   color: "#fff"    },
+  github:   { label: "GitHub",             Logo: GitHubLogo,   color: "#e8e8e8" },
 };
-const kindLabels = {
-  telegram: "Telegram",
-  email: "Email",
-  x: "X / Twitter",
-  http: "HTTP API",
-  discord: "Discord",
-};
+
 const requiredFields: Record<CredentialInput["kind"], string[]> = {
   telegram: ["botToken", "webhookSecret"],
   email: ["imapHost", "smtpHost", "user", "password"],
   x: ["accessToken", "userId"],
   http: [],
   discord: ["webhookUrl"],
+  slack: ["botToken"],
+  notion: ["apiKey"],
+  github: ["personalAccessToken"],
 };
 export function CredentialsPage() {
   const confirmAction = useConfirmAction();
@@ -143,7 +147,8 @@ export function CredentialsPage() {
                 </thead>
                 <tbody>
                   {data.map((credential) => {
-                    const Icon = kindIcons[credential.kind];
+                    const meta = kindMeta[credential.kind];
+                    const { Logo } = meta;
                     return (
                       <tr
                         key={credential.id}
@@ -151,15 +156,15 @@ export function CredentialsPage() {
                       >
                         <td className="px-4 py-3 font-medium">
                           <span className="flex items-center gap-3">
-                            <Icon
-                              size={16}
-                              className="shrink-0 text-muted-foreground"
-                            />
+                            <Logo size={18} />
                             {credential.name}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
-                          {kindLabels[credential.kind]}
+                          <span className="m4m-credential-kind-chip">
+                            <Logo size={16} />
+                            {meta.label}
+                          </span>
                         </td>
                         <td className="hidden px-4 py-3 text-muted-foreground sm:table-cell">
                           {new Date(credential.createdAt).toLocaleDateString()}
@@ -212,7 +217,7 @@ export function CredentialsPage() {
             <div className="forge-empty">
               <KeyRound size={24} className="mb-3 text-muted-foreground" />
               <h3>No credentials yet</h3>
-              <p>Add a connection for Telegram, email, X, or an HTTP API.</p>
+              <p>Add a connection for Telegram, email, Discord, Slack, GitHub, and more.</p>
               <Button
                 variant="outline"
                 onClick={(e) => {
@@ -383,6 +388,9 @@ export function CredentialsPage() {
                 <option value="telegram">Telegram</option>
                 <option value="email">Email (IMAP + SMTP)</option>
                 <option value="discord">Discord channel webhook</option>
+                <option value="slack">Slack</option>
+                <option value="github">GitHub</option>
+                <option value="notion">Notion</option>
                 <option value="x">X / Twitter</option>
                 <option value="http">HTTP API headers</option>
               </select>
@@ -476,6 +484,25 @@ export function CredentialsPage() {
               <p className="wf-notice">
                 Use an X user token with the required read/write scopes. X API
                 usage requires your own access and paid credits.
+              </p>
+            )}
+            {kind === "slack" && (
+              <p className="wf-notice">
+                Create a Slack app at api.slack.com, add the chat:write scope,
+                install it to your workspace, and copy the Bot User OAuth Token.
+              </p>
+            )}
+            {kind === "github" && (
+              <p className="wf-notice">
+                Generate a Personal Access Token in GitHub Settings → Developer
+                settings → Personal access tokens. Grant repo and issues scopes.
+              </p>
+            )}
+            {kind === "notion" && (
+              <p className="wf-notice">
+                Create an integration at notion.so/my-integrations, copy the
+                Internal Integration Token, and share your target database with
+                the integration.
               </p>
             )}
             {formError && (

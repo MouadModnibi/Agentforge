@@ -12,14 +12,17 @@ export const POST = withUser(async function POST(request: Request) {
     data.values = Object.fromEntries(
       Object.entries(data.values).filter(([, v]) => v.trim().length),
     );
-    const required = {
+    const required: Record<string, string[]> = {
       telegram: ["botToken", "webhookSecret"],
       email: ["imapHost", "smtpHost", "user", "password"],
       x: ["accessToken", "userId"],
       http: [],
       discord: ["webhookUrl"],
-    }[data.kind];
-    for (const key of required)
+      slack: ["botToken"],
+      notion: ["apiKey"],
+      github: ["personalAccessToken"],
+    };
+    for (const key of (required[data.kind] ?? []))
       if (!data.values[key]?.trim())
         throw new StoreError(`Credential requires ${key}`);
     if (

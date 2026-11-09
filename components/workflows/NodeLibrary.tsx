@@ -82,8 +82,17 @@ export function NodeLibrary({ onAdd }: { onAdd: (kind: NodeKind) => void }) {
       {["Triggers", "AI", "Logic", "Actions"].map((group) => {
         const kinds = filtered.filter((k) => catalog[k].category === group);
         if (!kinds.length) return null;
+        const groupColor =
+          group === "Triggers" ? "#e8bf66"
+          : group === "AI"       ? "#b8d2e8"
+          : group === "Logic"    ? "#b9b7a5"
+          :                        "#9dc6b1";
         return (
-          <section className="wf-palette-group" key={group}>
+          <section
+            className="wf-palette-group"
+            key={group}
+            style={{ "--group-color": groupColor } as React.CSSProperties}
+          >
             <h3>
               {group}
               <span>{kinds.length}</span>

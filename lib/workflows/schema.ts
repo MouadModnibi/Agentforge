@@ -17,6 +17,16 @@ export const nodeKinds = [
   "discord",
   "email",
   "x",
+  // Extended integrations
+  "slack",
+  "notion",
+  "github",
+  "youtube",
+  "rss",
+  "sheets",
+  "whatsapp",
+  "linkedin",
+  "weather",
 ] as const;
 export type NodeKind = (typeof nodeKinds)[number];
 export const NodeSchema = z.object({
@@ -111,7 +121,7 @@ export interface WorkflowRun {
 }
 export const CredentialInputSchema = z.object({
   name: z.string().trim().min(1).max(100),
-  kind: z.enum(["telegram", "email", "x", "http", "discord"]),
+  kind: z.enum(["telegram", "email", "x", "http", "discord", "slack", "notion", "github"]),
   values: z.record(z.string(), z.string().max(8192)),
 });
 export type CredentialInput = z.infer<typeof CredentialInputSchema>;

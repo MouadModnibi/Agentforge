@@ -39,7 +39,7 @@ export const executeNode: NodeExecutor = async (node, ctx) => {
   ctx.signal.throwIfAborted();
   const c = object(resolveBindings(node.config, ctx));
   const credential = async (
-    kind: "telegram" | "email" | "x" | "http" | "discord",
+    kind: "telegram" | "email" | "x" | "http" | "discord" | "slack" | "notion" | "github",
   ) => await workflowStore.credential(String(c.credentialId), kind);
   switch (node.kind) {
     case "manual":
@@ -286,6 +286,147 @@ export const executeNode: NodeExecutor = async (node, ctx) => {
           }),
         ),
       };
+    }
+    // ─── Extended integrations ──────────────────────────────────────────────
+    case "slack": {
+      const secret = await workflowStore.credential(String(c.credentialId), "slack");
+      const response = await guardedFetch("https://slack.com/api/chat.postMessage", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${secret.botToken}`,
+        },
+        body: JSON.stringify({ channel: String(c.channel), text: String(c.text) }),
+        signal: ctx.signal,
+      });
+      return { output: await jsonResponse(response) };
+    }
+    case "notion": {
+      const secret = await workflowStore.credential(String(c.credentialId), "notion");
+      const response = await guardedFetch("https://api.notion.com/v1/pages", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${secret.apiKey}`,
+          "Notion-Version": "2022-06-28",
+        },
+        body: JSON.stringify({
+          parent: { database_id: String(c.databaseId) },
+          properties: {
+            title: {
+              title: [{ type: "text", text: { content: String(c.title) } }],
+            },
+          },
+          children: c.content
+            ? [{ object: "block", type: "paragraph", paragraph: { rich_text: [{ type: "text", text: { content: String(c.content) } }] } }]
+            : [],
+        }),
+        signal: ctx.signal,
+      });
+      return { output: await jsonResponse(response) };
+    }
+    case "github": {
+      const secret = await workflowStore.credential(String(c.credentialId), "github");
+      const response = await guardedFetch(
+        `https://api.github.com/repos/${String(c.repo)}/issues`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${secret.personalAccessToken}`,
+            "User-Agent": "m8m-workflow",
+          },
+          body: JSON.stringify({ title: String(c.title), body: String(c.body ?? "") }),
+          signal: ctx.signal,
+        },
+      );
+      return { output: await jsonResponse(response) };
+    }
+    case "youtube": {
+      const apiKey = c.credentialId
+        ? (await workflowStore.credential(String(c.credentialId), "http") as Record<string, string>)["X-Api-Key"] ?? ""
+        : "";
+      const url = new URL("https://www.googleapis.com/youtube/v3/search");
+      url.searchParams.set("part", "snippet");
+      url.searchParams.set("q", String(c.query));
+      url.searchParams.set("maxResults", String(Number(c.maxResults) || 5));
+      if (apiKey) url.searchParams.set("key", apiKey);
+      return { output: await jsonResponse(await guardedFetch(url.toString(), { signal: ctx.signal })) };
+    }
+    case "rss": {
+      const response = await guardedFetch(String(c.url), { signal: ctx.signal });
+      const xml = await response.text();
+      // Minimal RSS parser — extracts <item> title, link, pubDate
+      const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)]
+        .slice(0, Number(c.maxItems) || 5)
+        .map((m) => {
+          const get = (tag: string) =>
+            m[1].match(new RegExp(`<${tag}>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`))?.[1]?.trim() ?? "";
+          return { title: get("title"), link: get("link"), pubDate: get("pubDate") };
+        });
+      return { output: items };
+    }
+    case "sheets": {
+      const secret = await workflowStore.credential(String(c.credentialId), "http") as Record<string, string>;
+      const accessToken = secret["Authorization"]?.replace(/^Bearer /, "") ?? secret["accessToken"] ?? "";
+      const response = await guardedFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${String(c.spreadsheetId)}/values/${encodeURIComponent(String(c.sheet))}:append?valueInputOption=USER_ENTERED`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+          body: JSON.stringify({ values: [Array.isArray(c.values) ? c.values : [c.values]] }),
+          signal: ctx.signal,
+        },
+      );
+      return { output: await jsonResponse(response) };
+    }
+    case "whatsapp": {
+      const secret = await workflowStore.credential(String(c.credentialId), "http") as Record<string, string>;
+      const token = secret["Authorization"]?.replace(/^Bearer /, "") ?? secret["whatsappToken"] ?? "";
+      const phoneNumberId = secret["phoneNumberId"] ?? "";
+      const response = await guardedFetch(
+        `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+          body: JSON.stringify({ messaging_product: "whatsapp", to: String(c.to), type: "text", text: { body: String(c.text) } }),
+          signal: ctx.signal,
+        },
+      );
+      return { output: await jsonResponse(response) };
+    }
+    case "linkedin": {
+      const secret = await workflowStore.credential(String(c.credentialId), "http") as Record<string, string>;
+      const token = secret["Authorization"]?.replace(/^Bearer /, "") ?? secret["accessToken"] ?? "";
+      const urnResponse = await guardedFetch("https://api.linkedin.com/v2/userinfo", {
+        headers: { authorization: `Bearer ${token}` },
+        signal: ctx.signal,
+      });
+      const me = await jsonResponse(urnResponse) as { sub?: string };
+      const response = await guardedFetch("https://api.linkedin.com/v2/ugcPosts", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          author: `urn:li:person:${me.sub ?? ""}`,
+          lifecycleState: "PUBLISHED",
+          specificContent: { "com.linkedin.ugc.ShareContent": { shareCommentary: { text: String(c.text) }, shareMediaCategory: "NONE" } },
+          visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" },
+        }),
+        signal: ctx.signal,
+      });
+      return { output: await jsonResponse(response) };
+    }
+    case "weather": {
+      const city = String(c.city);
+      // Geocode city via Open-Meteo geocoding API (free, no key)
+      const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`;
+      const geo = await jsonResponse(await guardedFetch(geoUrl, { signal: ctx.signal })) as { results?: Array<{ latitude: number; longitude: number; name: string; country: string }> };
+      if (!geo.results?.length) throw new Error(`City not found: ${city}`);
+      const { latitude, longitude, name, country } = geo.results[0];
+      const units = c.units === "fahrenheit" ? "fahrenheit" : "celsius";
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&temperature_unit=${units}`;
+      const weather = await jsonResponse(await guardedFetch(weatherUrl, { signal: ctx.signal })) as { current_weather?: Record<string, unknown> };
+      return { output: { city: name, country, ...weather.current_weather } };
     }
   }
 };

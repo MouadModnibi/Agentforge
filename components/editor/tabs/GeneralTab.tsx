@@ -12,6 +12,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { GEMINI_MODELS } from "@/lib/providers/models";
+import { GeminiLogo } from "@/components/workflows/NodeIcons";
 import type { AgentConfig } from "@/lib/schemas/agent";
 
 interface Props {
@@ -64,12 +65,16 @@ export function GeneralTab({
           onValueChange={(v) => onConfigChange({ model: v })}
         >
           <SelectTrigger id="agent-model" aria-label="Model">
+            <GeminiLogo size={16} className="shrink-0" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {GEMINI_MODELS.map((m) => (
               <SelectItem key={m.id} value={m.id}>
-                <span className="font-medium">{m.name}</span>
+                <span className="flex items-center gap-2">
+                  <GeminiLogo size={15} />
+                  <span className="font-medium">{m.name}</span>
+                </span>
                 {m.description && (
                   <span className="text-muted-foreground ml-2 text-xs">
                     {m.description}

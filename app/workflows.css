@@ -1510,3 +1510,116 @@
   background: color-mix(in srgb, var(--library-color, #3a3a3a) 20%, #232323);
   border-color: color-mix(in srgb, var(--library-color, #555) 45%, #333);
 }
+
+/* ─── Vivid node tile (canvas) ─────────────────────────────────────────────── */
+
+/*
+ * The tile now gets a solid pill with the node's brand color as background,
+ * replacing the old flat grey box. The logo SVG fills the space and handles
+ * its own internal palette, so no color filter needed.
+ */
+.wf-node-tile {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--node-color) 18%, #1a1e24);
+  border: 1px solid color-mix(in srgb, var(--node-color) 35%, #2a2f38);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--node-color) 20%, transparent);
+  transition: background 160ms, box-shadow 160ms;
+}
+
+.wf-node:hover .wf-node-tile,
+.wf-node.is-selected .wf-node-tile {
+  background: color-mix(in srgb, var(--node-color) 28%, #1a1e24);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--node-color) 35%, transparent);
+}
+
+/* Branded logo inside the tile — fixed size, no tint override */
+.wf-node-logo {
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* The whole node card gets a vivid left accent stripe */
+.wf-node::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--node-color);
+  opacity: 0.55;
+  transition: opacity 160ms;
+}
+
+.wf-node:hover::before,
+.wf-node.is-selected::before {
+  opacity: 1;
+}
+
+/* Running state gets a vivid pulsing border */
+.wf-node.status-running::before {
+  opacity: 1;
+  animation: wf-stripe-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes wf-stripe-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%       { opacity: 1; }
+}
+
+/* ─── Vivid library palette icons ──────────────────────────────────────────── */
+
+/*
+ * Palette icons now have a solid colored square background (like in Zapier /
+ * Make) so each service is instantly recognisable by color, not just shape.
+ */
+.wf-library-node-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--library-color, #3a3a3a) 18%, #1e2126);
+  border: 1px solid color-mix(in srgb, var(--library-color, #444) 30%, #2c3038);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--library-color, #000) 15%, transparent);
+  color: var(--library-color, #b9b9b9);
+  transition: background 150ms, box-shadow 150ms, border-color 150ms;
+}
+
+.wf-library-node:hover .wf-library-node-icon {
+  background: color-mix(in srgb, var(--library-color, #3a3a3a) 28%, #1e2126);
+  border-color: color-mix(in srgb, var(--library-color, #555) 50%, #333);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--library-color, #000) 25%, transparent);
+}
+
+/* Category group heading accent dot */
+.wf-palette-group h3::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--group-color, #555);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ─── Credential table — service logo chips ─────────────────────────────────── */
+
+.m4m-credential-kind-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 9px 3px 4px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: #1e2126;
+  border: 1px solid #2e343c;
+}
+
+.m4m-credential-kind-chip svg {
+  border-radius: 5px;
+}
