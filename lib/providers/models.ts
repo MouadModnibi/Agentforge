@@ -13,9 +13,19 @@ export interface ModelDefinition {
 
 export const GEMINI_MODELS: ModelDefinition[] = [
   {
+    id: "gemini-3.5-flash",
+    name: "Gemini 3.5 Flash",
+    description: "Latest and fastest. Best for most tasks. Recommended default.",
+    capabilities: {
+      supportsToolsWithStructuredOutput: true,
+      supportsStreaming: true,
+      contextWindow: 1048576,
+    },
+  },
+  {
     id: "gemini-3.8-flash",
     name: "Gemini 3.8 Flash",
-    description: "Latest and most intelligent Flash model. Best for most tasks. Recommended default.",
+    description: "Most intelligent Flash model. More powerful but higher cost.",
     capabilities: {
       supportsToolsWithStructuredOutput: true,
       supportsStreaming: true,
@@ -69,6 +79,6 @@ export function getModel(id: string): ModelDefinition | undefined {
 }
 
 export function getDefaultModel(): ModelDefinition {
-  const defaultId = process.env.GEMINI_DEFAULT_MODEL || "gemini-3.8-flash";
+  const defaultId = process.env.GEMINI_DEFAULT_MODEL || "gemini-3.5-flash";
   return getModel(defaultId) ?? GEMINI_MODELS[0];
 }
