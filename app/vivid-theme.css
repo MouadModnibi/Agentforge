@@ -1,0 +1,607 @@
+/*
+ * vivid-theme.css
+ * Layers bold color on top of the Signal Desk base.
+ * Loaded last so it wins specificity without !important abuse.
+ * Approach: keep the dark surfaces but inject vivid accent colors
+ * through gradients, colored borders, glows, and typography treatments.
+ */
+
+/* ─── Extended color palette ─────────────────────────────────────────────── */
+:root {
+  /* Vivid accent spectrum — used throughout */
+  --vt-purple:   #a78bfa;   /* violet-400  */
+  --vt-pink:     #f472b6;   /* pink-400    */
+  --vt-cyan:     #22d3ee;   /* cyan-400    */
+  --vt-amber:    #fbbf24;   /* amber-400   */
+  --vt-green:    #34d399;   /* emerald-400 */
+  --vt-blue:     #60a5fa;   /* blue-400    */
+  --vt-orange:   #fb923c;   /* orange-400  */
+  --vt-rose:     #fb7185;   /* rose-400    */
+
+  /* Gradient definitions */
+  --vt-grad-brand:    linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #22d3ee 100%);
+  --vt-grad-warm:     linear-gradient(135deg, #fbbf24 0%, #fb923c 50%, #f472b6 100%);
+  --vt-grad-cool:     linear-gradient(135deg, #34d399 0%, #22d3ee 50%, #60a5fa 100%);
+  --vt-grad-fire:     linear-gradient(135deg, #f472b6 0%, #fb923c 100%);
+  --vt-grad-sidebar:  linear-gradient(180deg, #0f1117 0%, #111827 40%, #0d1520 100%);
+
+  /* Glow helpers */
+  --vt-glow-purple: 0 0 18px #a78bfa30, 0 0 40px #a78bfa15;
+  --vt-glow-cyan:   0 0 18px #22d3ee30, 0 0 40px #22d3ee15;
+  --vt-glow-amber:  0 0 14px #fbbf2435, 0 0 30px #fbbf2415;
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.forge-sidebar {
+  background: var(--vt-grad-sidebar) !important;
+  border-right: 1px solid #1e2d40 !important;
+}
+
+/* Brand wordmark — gradient text */
+.m4m-wordmark {
+  background: var(--vt-grad-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: none !important;
+}
+
+/* Nav items — colored left-border on hover */
+.forge-nav-item {
+  border-left: 2px solid transparent;
+  border-radius: 0 6px 6px 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.forge-nav-item:hover {
+  background: #ffffff08 !important;
+  border-left-color: var(--vt-cyan);
+  color: #fff !important;
+}
+
+/* Active nav — vivid left border + glow */
+.forge-nav-item.is-active {
+  background: linear-gradient(90deg, #22d3ee12 0%, transparent 100%) !important;
+  border-left-color: var(--vt-cyan) !important;
+  color: #e0f7fa !important;
+  box-shadow: inset 3px 0 0 var(--vt-cyan);
+}
+
+.forge-nav-item.is-active svg {
+  color: var(--vt-cyan) !important;
+}
+
+/* Nav section labels */
+.forge-nav-label {
+  color: #475569 !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-size: 9px !important;
+}
+
+/* Sidebar footer user avatar */
+.forge-avatar,
+.m4m-user {
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  border: 1px solid #334155 !important;
+  color: var(--vt-purple) !important;
+}
+
+/* ─── Top bar ─────────────────────────────────────────────────────────────── */
+
+.forge-topbar {
+  background: #0a0e16 !important;
+  border-bottom: 1px solid #1a2540 !important;
+}
+
+.m4m-breadcrumb strong {
+  background: var(--vt-grad-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Page headings ───────────────────────────────────────────────────────── */
+
+.forge-page-heading h1 {
+  background: var(--vt-grad-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
+/* Decorative accent bar above h1 — rainbow */
+.forge-page-heading h1::before,
+.forge-page-heading .forge-page-heading h1::before {
+  background: var(--vt-grad-brand) !important;
+}
+
+/* The signal-desk eyebrow line */
+.forge-page-heading h1::before {
+  background: var(--vt-grad-brand) !important;
+}
+
+/* ─── Agent cards — each card gets a unique color accent ─────────────────── */
+
+.forge-agent-card {
+  border-color: #1e293b !important;
+  background: #0d1220 !important;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s !important;
+}
+
+/* Top edge glowing border — cycles through 4 colors via nth-child */
+.forge-agent-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: var(--vt-grad-brand);
+  opacity: 0.7;
+  border-radius: 6px 6px 0 0;
+}
+
+.forge-agent-card:nth-child(4n+1)::before { background: var(--vt-grad-brand); }
+.forge-agent-card:nth-child(4n+2)::before { background: var(--vt-grad-warm); }
+.forge-agent-card:nth-child(4n+3)::before { background: var(--vt-grad-cool); }
+.forge-agent-card:nth-child(4n+4)::before { background: var(--vt-grad-fire); }
+
+.forge-agent-card:hover {
+  border-color: #334155 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 32px #00000040, 0 0 0 1px #334155 !important;
+}
+
+/* Agent icon — colored per position */
+.forge-agent-icon {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+}
+
+.forge-agent-card:nth-child(4n+1) .forge-agent-icon { color: var(--vt-purple) !important; border-color: #a78bfa30 !important; }
+.forge-agent-card:nth-child(4n+2) .forge-agent-icon { color: var(--vt-cyan) !important;   border-color: #22d3ee30 !important; }
+.forge-agent-card:nth-child(4n+3) .forge-agent-icon { color: var(--vt-green) !important;  border-color: #34d39930 !important; }
+.forge-agent-card:nth-child(4n+4) .forge-agent-icon { color: var(--vt-amber) !important;  border-color: #fbbf2430 !important; }
+
+/* Agent title */
+.forge-agent-title {
+  color: #e2e8f0 !important;
+}
+
+/* Model badge — monospace pill */
+.forge-agent-model {
+  color: var(--vt-cyan) !important;
+  opacity: 0.85;
+}
+
+/* Instructions accent left-border */
+.m4m-agent-instructions {
+  border-left-color: #334155 !important;
+}
+
+.m4m-agent-instructions span {
+  color: var(--vt-purple) !important;
+}
+
+/* Card footer */
+.forge-agent-card-footer {
+  border-color: #1e293b !important;
+  color: #64748b !important;
+}
+
+/* ─── Status badges — vivid ───────────────────────────────────────────────── */
+
+/* Reuse shadcn badge but force vivid colors */
+[data-state] .badge-success,
+.badge[data-variant="success"],
+span[class*="success"] {
+  background: #052e16 !important;
+  color: var(--vt-green) !important;
+  border-color: #166534 !important;
+}
+
+/* Active workflow state chip */
+.m4m-workflow-state.is-active {
+  color: var(--vt-green) !important;
+}
+
+.m4m-workflow-state.is-active i {
+  background: var(--vt-green) !important;
+  box-shadow: 0 0 0 3px #34d39925 !important;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+
+/* Primary button — gradient */
+button[class*="bg-primary"],
+.btn-primary,
+[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]):not([class*="secondary"]):not([class*="destructive"]):not([class*="link"]) {
+  background: linear-gradient(135deg, #7c3aed, #2563eb) !important;
+  border: none !important;
+  box-shadow: 0 2px 12px #7c3aed30 !important;
+  color: #fff !important;
+  transition: opacity 0.15s, box-shadow 0.15s !important;
+}
+
+[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]):not([class*="secondary"]):not([class*="destructive"]):not([class*="link"]):hover {
+  opacity: 0.9 !important;
+  box-shadow: 0 4px 18px #7c3aed45 !important;
+}
+
+/* Outline button */
+[data-slot="button"][class*="outline"] {
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+  background: transparent !important;
+}
+
+[data-slot="button"][class*="outline"]:hover {
+  border-color: var(--vt-cyan) !important;
+  color: var(--vt-cyan) !important;
+  background: #22d3ee0a !important;
+}
+
+/* ─── Filter bar & tabs ───────────────────────────────────────────────────── */
+
+.forge-status-tabs button.is-active,
+.forge-view-toggle button.is-active,
+.wf-library-categories > button.active,
+.wf-drawer-tabs > button.active {
+  background: linear-gradient(135deg, #1e1b4b, #1e3a5f) !important;
+  color: var(--vt-cyan) !important;
+  border-color: #22d3ee40 !important;
+}
+
+.forge-status-tabs button:hover {
+  color: var(--vt-cyan) !important;
+}
+
+/* ─── Workflow gallery cards ──────────────────────────────────────────────── */
+
+.m4m-workflow-visual-card {
+  background: #0d1220 !important;
+  border-color: #1e293b !important;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s !important;
+}
+
+.m4m-workflow-visual-card:hover {
+  border-color: #334155 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 32px #00000040 !important;
+}
+
+.m4m-workflow-preview-surface {
+  background: linear-gradient(180deg, #0a0e1a 0%, #0d1525 100%) !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+/* Preview strip route wire colors */
+.m4m-route-wire {
+  stroke: #334155 !important;
+}
+.m4m-route-port {
+  fill: #0f172a !important;
+  stroke: #475569 !important;
+}
+.m4m-route-port:hover,
+.m4m-workflow-visual-link:hover .m4m-route-port {
+  stroke: var(--vt-cyan) !important;
+  fill: #0f2030 !important;
+}
+
+/* Active status chip */
+.m4m-workflow-state {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid #1e293b;
+  background: #0f172a;
+}
+
+/* ─── Workflow canvas nodes ───────────────────────────────────────────────── */
+
+.wf-node {
+  background: #0d1525 !important;
+  border-color: #1e2d40 !important;
+  box-shadow: 0 2px 8px #00000050, 0 0 0 0 transparent !important;
+}
+
+.wf-node:hover,
+.wf-node.is-selected {
+  border-color: #334155 !important;
+  box-shadow: 0 4px 16px #00000060, var(--vt-glow-cyan) !important;
+}
+
+/* Canvas background */
+.wf-canvas .react-flow {
+  --xy-background-color: #080c14 !important;
+}
+
+/* Edge color */
+.wf-canvas .react-flow {
+  --xy-edge-stroke-default: #1e3a5f !important;
+}
+
+/* ─── Inspector panel ─────────────────────────────────────────────────────── */
+
+.wf-inspector {
+  background: #090e18 !important;
+  border-left-color: #1e293b !important;
+}
+
+.wf-inspector-heading > span {
+  background: linear-gradient(135deg, #1e1b4b, #0f2030) !important;
+  border-color: #334155 !important;
+}
+
+/* ─── Credentials page ────────────────────────────────────────────────────── */
+
+.m4m-credential-table {
+  background: #0d1220 !important;
+  border-color: #1e293b !important;
+}
+
+.m4m-credential-note {
+  border-top-color: var(--vt-purple) !important;
+}
+
+.m4m-credential-note h2 {
+  background: var(--vt-grad-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Empty states ────────────────────────────────────────────────────────── */
+
+.forge-empty {
+  border-color: #1e293b !important;
+  background: linear-gradient(135deg, #0d1220 0%, #0a0e18 100%) !important;
+}
+
+.forge-empty-icon {
+  background: linear-gradient(135deg, #1e1b4b, #0f2030) !important;
+  border-color: #334155 !important;
+  color: var(--vt-purple) !important;
+}
+
+.forge-empty h3 {
+  color: #e2e8f0 !important;
+}
+
+/* New agent card */
+.forge-new-agent-card {
+  border-color: #1e293b !important;
+  background: linear-gradient(135deg, #0d1220, #080c14) !important;
+}
+
+.forge-new-agent-card:hover {
+  border-color: var(--vt-purple) !important;
+  box-shadow: var(--vt-glow-purple) !important;
+  color: var(--vt-purple) !important;
+}
+
+.forge-new-agent-card > span {
+  border-color: #334155 !important;
+  color: var(--vt-purple) !important;
+}
+
+/* ─── Template dialog ─────────────────────────────────────────────────────── */
+
+.m4m-workflow-template-dialog {
+  background: #0d1220 !important;
+  border-color: #1e293b !important;
+}
+
+.m4m-workflow-template-options > button {
+  background: #0a0e18 !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 8px !important;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s !important;
+}
+
+.m4m-workflow-template-options > button:hover {
+  border-color: var(--vt-purple) !important;
+  background: #11172a !important;
+  box-shadow: var(--vt-glow-purple) !important;
+}
+
+.m4m-workflow-template-options > button > svg {
+  color: var(--vt-purple) !important;
+}
+
+.m4m-workflow-template-options > button strong {
+  color: #e2e8f0 !important;
+}
+
+/* ─── Dialogs and modals ──────────────────────────────────────────────────── */
+
+[role="dialog"]:not(.m4m-mobile-navigation),
+[role="alertdialog"] {
+  background: #0d1220 !important;
+  border: 1px solid #1e293b !important;
+}
+
+/* ─── Inputs and selects ──────────────────────────────────────────────────── */
+
+input:not([type="range"]),
+textarea,
+select,
+[role="combobox"] {
+  background: #080c14 !important;
+  border-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline-color: var(--vt-cyan) !important;
+  border-color: var(--vt-cyan) !important;
+}
+
+/* ─── Workflow header ─────────────────────────────────────────────────────── */
+
+.wf-editor-toolbar {
+  background: #090e18 !important;
+  border-bottom-color: #1e293b !important;
+}
+
+.wf-editor-subbar {
+  background: #060a12 !important;
+  border-bottom-color: #1a2540 !important;
+}
+
+.wf-editor-subbar button.active::after {
+  background: var(--vt-cyan) !important;
+}
+
+/* ─── Scrollbars — vivid thumb ────────────────────────────────────────────── */
+
+* {
+  scrollbar-color: #334155 #080c14 !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155 !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vt-cyan) !important;
+}
+
+/* ─── Selection highlight ─────────────────────────────────────────────────── */
+
+::selection {
+  background: #22d3ee30 !important;
+  color: #fff !important;
+}
+
+/* ─── Workflow page heading ───────────────────────────────────────────────── */
+
+.m4m-workflows-index h1 {
+  background: var(--vt-grad-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.m4m-workflows-title-icon {
+  background: linear-gradient(135deg, #1e1b4b, #0f2030) !important;
+  border-color: #334155 !important;
+  color: var(--vt-purple) !important;
+  border-radius: 10px;
+  padding: 8px;
+  display: grid;
+  place-items: center;
+}
+
+/* Workflows toolbar tabs */
+.m4m-workflows-tabs button.is-active {
+  color: var(--vt-cyan) !important;
+  background: #0f1e30 !important;
+  border-bottom-color: var(--vt-cyan) !important;
+}
+
+/* ─── Login / register pages ──────────────────────────────────────────────── */
+
+.m4m-auth-card,
+.forge-auth-card {
+  background: #0d1220 !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 25px 80px #00000060 !important;
+}
+
+/* Auth artwork glow */
+.m4m-auth-artwork {
+  filter: drop-shadow(0 0 30px #a78bfa20) !important;
+}
+
+/* ─── Toast notifications ─────────────────────────────────────────────────── */
+
+[data-sonner-toast] {
+  background: #0d1220 !important;
+  border: 1px solid #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
+[data-sonner-toast][data-type="success"] {
+  border-left: 3px solid var(--vt-green) !important;
+}
+
+[data-sonner-toast][data-type="error"] {
+  border-left: 3px solid var(--vt-rose) !important;
+}
+
+/* ─── Code / mono text ────────────────────────────────────────────────────── */
+
+code,
+kbd,
+.wf-json,
+[class*="font-mono"] {
+  color: var(--vt-cyan) !important;
+}
+
+/* ─── Credential kind chip ────────────────────────────────────────────────── */
+
+.m4m-credential-kind-chip {
+  background: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+/* ─── Workflow library palette ────────────────────────────────────────────── */
+
+.wf-library {
+  background: #090e18 !important;
+}
+
+.wf-palette-group h3 {
+  color: #475569 !important;
+}
+
+.wf-library-node:hover {
+  background: #0f172a !important;
+}
+
+.wf-library-node strong {
+  color: #e2e8f0 !important;
+}
+
+/* ─── Agent editor tabs ───────────────────────────────────────────────────── */
+
+.m4m-agent-layout > [role="tablist"] > [role="tab"][data-state="active"] {
+  background: linear-gradient(135deg, #1e1b4b20, #0f203020) !important;
+  color: var(--vt-cyan) !important;
+  border-left: 2px solid var(--vt-cyan);
+}
+
+/* ─── Forge page heading decorative bar ───────────────────────────────────── */
+
+.forge-page-heading h1::before {
+  background: var(--vt-grad-brand) !important;
+  height: 3px !important;
+  width: 36px !important;
+  border-radius: 2px !important;
+}
+
+/* ─── Workflow execution status ───────────────────────────────────────────── */
+
+.wf-status-dot.succeeded    { background: var(--vt-green) !important; }
+.wf-status-dot.failed,
+.wf-status-dot.interrupted  { background: var(--vt-rose) !important; }
+.wf-status-dot.running      { background: var(--vt-cyan) !important; box-shadow: 0 0 6px var(--vt-cyan); }
+.wf-status-dot.queued       { background: var(--vt-amber) !important; }
+
+/* ─── Background body ─────────────────────────────────────────────────────── */
+
+body {
+  background: #080c14 !important;
+}
+
+.forge-workspace-body {
+  background: #080c14 !important;
+}

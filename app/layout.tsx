@@ -7,6 +7,7 @@ import "@fontsource-variable/ibm-plex-sans";
 import "@fontsource/ibm-plex-mono/400.css";
 import "./signal-desk.css";
 import "./visual-effects.css";
+import "./vivid-theme.css";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {

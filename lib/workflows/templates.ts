@@ -1,5 +1,6 @@
 import { GraphSchema, type WorkflowGraph } from "./schema";
 import { largeTemplates } from "./large-templates";
+import { extendedTemplates } from "./extended-templates";
 export interface WorkflowTemplate {
   id: string;
   name: string;
@@ -291,6 +292,7 @@ templates.push({
 });
 
 templates.push(...largeTemplates);
+templates.push(...extendedTemplates);
 
 templates.push({
   id: "discord-message-test",
