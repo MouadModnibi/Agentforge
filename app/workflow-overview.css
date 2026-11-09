@@ -509,3 +509,125 @@
     display: none;
   }
 }
+
+/* ─── Category filter pills bar ─────────────────────────────────────────────── */
+.m4m-workflows-categories {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 18px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--desk-line);
+}
+
+.m4m-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--desk-muted);
+  background: var(--desk-surface);
+  border: 1px solid var(--desk-line);
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.m4m-cat-pill:hover {
+  background: var(--desk-raised);
+  color: var(--desk-ink);
+  border-color: #4a5568;
+}
+
+.m4m-cat-pill.is-active {
+  background: linear-gradient(135deg, #1e1b4b, #0f2030);
+  border-color: #22d3ee60;
+  color: #22d3ee;
+}
+
+/* ─── Inline category pills on cards ────────────────────────────────────────── */
+.m4m-workflow-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.m4m-workflow-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  color: var(--desk-muted);
+  background: var(--desk-bg);
+  border: 1px solid var(--desk-line);
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.m4m-workflow-cat-pill:hover {
+  color: var(--desk-ink);
+  border-color: #4a5568;
+  background: var(--desk-raised);
+}
+
+.m4m-workflow-cat-pill.is-active {
+  color: #22d3ee;
+  border-color: #22d3ee50;
+  background: #0f172a;
+}
+
+/* ─── Star / favorite button ─────────────────────────────────────────────────── */
+.m4m-workflow-star {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  color: var(--desk-muted);
+  background: transparent;
+  border: 0;
+  flex-shrink: 0;
+  transition: color 0.12s, background 0.12s, transform 0.12s;
+}
+
+.m4m-workflow-star:hover {
+  color: #fbbf24;
+  background: #fbbf2412;
+  transform: scale(1.15);
+}
+
+.m4m-workflow-star.is-fav {
+  color: #fbbf24;
+}
+
+.m4m-workflow-star.is-fav:hover {
+  color: #f59e0b;
+  background: #f59e0b12;
+}
+
+/* ─── Favorited card accent ───────────────────────────────────────────────────── */
+.m4m-workflow-visual-card.is-favorite {
+  border-color: #fbbf2430;
+}
+
+.m4m-workflow-visual-card.is-favorite .m4m-workflow-visual-copy::before {
+  color: #fbbf24;
+}
+
+/* Favorited row in list view */
+.m4m-workflows-table tr.is-favorite td {
+  background: #fbbf2405;
+}
+
+/* ─── Favorites tab star icon alignment ──────────────────────────────────────── */
+.m4m-workflows-tabs button {
+  gap: 6px;
+}

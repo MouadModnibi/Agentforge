@@ -74,6 +74,7 @@ export interface Workflow {
   graph: WorkflowGraph;
   revision: number;
   activeRevision: number | null;
+  favorite: boolean;
   createdAt: number;
   updatedAt: number;
 }

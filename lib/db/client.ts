@@ -106,6 +106,20 @@ async function migrate() {
       );
       await tx.execute("INSERT INTO app_migrations VALUES(2)");
     }
+    // Migration 3: add favorite column to workflows
+    const hasMig3 = await tx.execute(
+      "SELECT version FROM app_migrations WHERE version=3",
+    );
+    if (!hasMig3.rows.length) {
+      try {
+        await tx.execute(
+          "ALTER TABLE workflows ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0",
+        );
+      } catch {
+        // Column may already exist — ignore
+      }
+      await tx.execute("INSERT INTO app_migrations VALUES(3)");
+    }
     await tx.commit();
   } catch (error) {
     await tx.rollback();

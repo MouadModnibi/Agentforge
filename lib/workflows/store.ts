@@ -32,6 +32,7 @@ function workflow(row: Row): Workflow {
     revision: Number(row.revision),
     activeRevision:
       row.active_revision === null ? null : Number(row.active_revision),
+    favorite: !!row.favorite,
     createdAt: Number(row.created_at),
     updatedAt: Number(row.updated_at),
   };
@@ -433,6 +434,15 @@ export const workflowStore = {
     }
     await execute(
       "DELETE FROM workflow_credentials WHERE id=? AND owner_id=?",
+      id,
+      ownerId(),
+    );
+  },
+  async toggleFavorite(id: string, value: boolean) {
+    await mustOwn(id);
+    await execute(
+      "UPDATE workflows SET favorite=? WHERE id=? AND owner_id=?",
+      value ? 1 : 0,
       id,
       ownerId(),
     );

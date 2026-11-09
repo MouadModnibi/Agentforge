@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Plus,
   Search,
+  Star,
   Trash2,
   Upload,
   Workflow as WorkflowIcon,
@@ -41,7 +42,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { templates } from "@/lib/workflows/templates";
-import { WorkflowInputSchema, type Workflow } from "@/lib/workflows/schema";
+import { catalog } from "@/lib/workflows/catalog";
+import { WorkflowInputSchema, type Workflow, type NodeKind } from "@/lib/workflows/schema";
 import { useWorkflows, workflowFetch } from "@/lib/hooks/useWorkflows";
 import { WorkflowRouteStrip } from "@/components/workflows/WorkflowRouteStrip";
 import { useConfirmAction } from "@/components/ui/confirm-action";
@@ -50,7 +52,49 @@ import { useCollectionState } from "@/lib/hooks/useCollectionState";
 import { WorkspaceArtwork } from "@/components/WorkspaceArtwork";
 import "@/app/workflow-overview.css";
 
-type WorkflowFilter = "all" | "active" | "draft";
+type WorkflowFilter = "all" | "active" | "draft" | "favorites";
+
+// ─── Category detection ────────────────────────────────────────────────────────
+const NODE_CATEGORY_MAP: Partial<Record<NodeKind, string>> = {
+  email:           "Email",
+  emailTrigger:    "Email",
+  telegram:        "Telegram",
+  telegramTrigger: "Telegram",
+  discord:         "Discord",
+  slack:           "Slack",
+  whatsapp:        "WhatsApp",
+  x:               "X / Twitter",
+  xTrigger:        "X / Twitter",
+  linkedin:        "LinkedIn",
+  youtube:         "YouTube",
+  rss:             "RSS",
+  github:          "GitHub",
+  notion:          "Notion",
+  sheets:          "Google Sheets",
+  weather:         "Weather",
+  agent:           "AI",
+  gemini:          "AI",
+  http:            "HTTP",
+  webhook:         "Webhook",
+  formTrigger:     "Forms",
+};
+
+function getWorkflowCategories(workflow: Workflow): string[] {
+  const cats = new Set<string>();
+  for (const node of workflow.graph.nodes) {
+    const cat = NODE_CATEGORY_MAP[node.kind as NodeKind];
+    if (cat) cats.add(cat);
+  }
+  return [...cats];
+}
+
+function getAllCategories(workflows: Workflow[]): string[] {
+  const cats = new Set<string>();
+  for (const w of workflows) {
+    for (const c of getWorkflowCategories(w)) cats.add(c);
+  }
+  return [...cats].sort();
+}
 
 export function WorkflowsPage() {
   const { data, isLoading, error, refetch } = useWorkflows();
@@ -59,6 +103,7 @@ export function WorkflowsPage() {
     "workflows.filter",
     "all",
   );
+  const [category, setCategory] = useCollectionState("workflows.category", "");
   const [view, setView] = useCollectionState<"gallery" | "list">(
     "workflows.view",
     "gallery",
@@ -66,27 +111,34 @@ export function WorkflowsPage() {
   const [creating, setCreating] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [togglingFav, setTogglingFav] = useState<string | null>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const confirmAction = useConfirmAction();
   const searchInput = useRef<HTMLInputElement>(null);
   const [page, setPage] = useCollectionState("workflows.page", 1);
   const qc = useQueryClient();
+
   const workflows = data?.workflows ?? [];
   const query = search.trim().toLowerCase();
-  const activeCount = workflows.filter(
-    (workflow) => workflow.activeRevision,
-  ).length;
-  const visible = workflows.filter(
-    (workflow) =>
-      `${workflow.name} ${workflow.description ?? ""}`
-        .toLowerCase()
-        .includes(query) &&
-      (filter === "all" ||
-        (filter === "active"
-          ? !!workflow.activeRevision
-          : !workflow.activeRevision)),
-  );
+  const activeCount = workflows.filter((w) => w.activeRevision).length;
+  const favCount = workflows.filter((w) => w.favorite).length;
+  const allCategories = getAllCategories(workflows);
+
+  const visible = workflows.filter((workflow) => {
+    const matchesSearch = `${workflow.name} ${workflow.description ?? ""}`
+      .toLowerCase()
+      .includes(query);
+    const matchesFilter =
+      filter === "all" ||
+      (filter === "active" ? !!workflow.activeRevision : false) ||
+      (filter === "draft" ? !workflow.activeRevision : false) ||
+      (filter === "favorites" ? workflow.favorite : false);
+    const matchesCategory =
+      !category || getWorkflowCategories(workflow).includes(category);
+    return matchesSearch && matchesFilter && matchesCategory;
+  });
+
   const pages = Math.max(1, Math.ceil(visible.length / 12));
   const currentPage = Math.min(page, pages);
   const paged = visible.slice((currentPage - 1) * 12, currentPage * 12);
@@ -163,6 +215,23 @@ export function WorkflowsPage() {
     }
   }
 
+  async function toggleFavorite(workflow: Workflow) {
+    setTogglingFav(workflow.id);
+    try {
+      await workflowFetch(`/api/workflows/${workflow.id}/favorite`, "POST", {
+        value: !workflow.favorite,
+      });
+      qc.invalidateQueries({ queryKey: ["workflows"] });
+      toast.success(
+        workflow.favorite ? "Removed from favorites" : "Added to favorites",
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not update favorite");
+    } finally {
+      setTogglingFav(null);
+    }
+  }
+
   function download(workflow: Workflow) {
     const link = document.createElement("a");
     const url = URL.createObjectURL(
@@ -186,6 +255,98 @@ export function WorkflowsPage() {
     link.click();
     URL.revokeObjectURL(url);
   }
+
+  function StarButton({ workflow }: { workflow: Workflow }) {
+    const spinning = togglingFav === workflow.id;
+    return (
+      <button
+        className={`m4m-workflow-star ${workflow.favorite ? "is-fav" : ""}`}
+        aria-label={workflow.favorite ? "Remove from favorites" : "Add to favorites"}
+        aria-pressed={workflow.favorite}
+        disabled={spinning}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleFavorite(workflow);
+        }}
+      >
+        {spinning ? (
+          <Loader2 size={14} className="animate-spin" />
+        ) : (
+          <Star size={14} fill={workflow.favorite ? "currentColor" : "none"} />
+        )}
+      </button>
+    );
+  }
+
+  function CategoryTags({ workflow }: { workflow: Workflow }) {
+    const cats = getWorkflowCategories(workflow);
+    if (!cats.length) return null;
+    return (
+      <div className="m4m-workflow-cats">
+        {cats.slice(0, 3).map((cat) => (
+          <button
+            key={cat}
+            className={`m4m-workflow-cat-pill ${category === cat ? "is-active" : ""}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setCategory(category === cat ? "" : cat);
+              setPage(1);
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const WorkflowActions = ({ workflow }: { workflow: Workflow }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="m4m-workflow-more"
+          aria-label={`Actions for ${workflow.name}`}
+          disabled={pendingAction === workflow.id}
+        >
+          {pendingAction === workflow.id ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <MoreHorizontal size={16} />
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="m4m-workflow-actions-menu">
+        <DropdownMenuItem asChild>
+          <Link href={`/workflows/${workflow.id}`}>
+            <ArrowUpRight size={14} />
+            Open workflow
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => toggleFavorite(workflow)}>
+          <Star size={14} />
+          {workflow.favorite ? "Remove from favorites" : "Add to favorites"}
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => action(workflow, "duplicate")}>
+          <Copy size={14} />
+          Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => download(workflow)}>
+          <Download size={14} />
+          Export JSON
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="m4m-workflow-delete"
+          onSelect={() => action(workflow, "delete")}
+        >
+          <Trash2 size={14} />
+          Delete workflow
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   return (
     <main className="m4m-workflows-index">
@@ -288,13 +449,15 @@ export function WorkflowsPage() {
         </div>
       </header>
 
+      {/* ── Toolbar ── */}
       <div className="m4m-workflows-toolbar">
         <div className="m4m-workflows-tabs" aria-label="Filter workflows">
           {(
             [
-              ["all", "All workflows", workflows.length],
-              ["active", "Active", activeCount],
-              ["draft", "Drafts", workflows.length - activeCount],
+              ["all",       "All",       workflows.length],
+              ["active",    "Active",    activeCount],
+              ["draft",     "Drafts",    workflows.length - activeCount],
+              ["favorites", "Favorites", favCount],
             ] as const
           ).map(([value, label, count]) => (
             <button
@@ -306,6 +469,9 @@ export function WorkflowsPage() {
                 setPage(1);
               }}
             >
+              {value === "favorites" && (
+                <Star size={12} fill={filter === "favorites" ? "currentColor" : "none"} />
+              )}
               {label}
               <span>{isLoading ? "—" : count}</span>
             </button>
@@ -356,6 +522,31 @@ export function WorkflowsPage() {
         </div>
       </div>
 
+      {/* ── Category filter pills ── */}
+      {allCategories.length > 0 && (
+        <div className="m4m-workflows-categories" aria-label="Filter by category">
+          <button
+            className={`m4m-cat-pill ${!category ? "is-active" : ""}`}
+            onClick={() => { setCategory(""); setPage(1); }}
+          >
+            All
+          </button>
+          {allCategories.map((cat) => (
+            <button
+              key={cat}
+              className={`m4m-cat-pill ${category === cat ? "is-active" : ""}`}
+              onClick={() => {
+                setCategory(category === cat ? "" : cat);
+                setPage(1);
+              }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Workflow list ── */}
       <section
         aria-label="Your workflows"
         className="m4m-workflows-collection"
@@ -377,7 +568,10 @@ export function WorkflowsPage() {
         ) : visible.length && view === "gallery" ? (
           <div className="m4m-workflows-gallery">
             {paged.map((workflow) => (
-              <article className="m4m-workflow-visual-card" key={workflow.id}>
+              <article
+                className={`m4m-workflow-visual-card ${workflow.favorite ? "is-favorite" : ""}`}
+                key={workflow.id}
+              >
                 <Link
                   href={`/workflows/${workflow.id}`}
                   className="m4m-workflow-visual-link"
@@ -395,9 +589,6 @@ export function WorkflowsPage() {
                     <span className="m4m-workflow-preview-open">
                       <ArrowUpRight size={14} />
                     </span>
-                    <span className="m4m-route-preview-label">
-                      Route preview
-                    </span>
                     <WorkflowRouteStrip graph={workflow.graph} />
                   </div>
                   <div className="m4m-workflow-visual-copy">
@@ -405,6 +596,7 @@ export function WorkflowsPage() {
                     <p id={`workflow-${workflow.id}-description`}>
                       {workflow.description || "No description"}
                     </p>
+                    <CategoryTags workflow={workflow} />
                   </div>
                 </Link>
                 <footer className="m4m-workflow-visual-footer">
@@ -414,6 +606,7 @@ export function WorkflowsPage() {
                     {workflow.graph.nodes.length === 1 ? "step" : "steps"}
                   </span>
                   <span>v{workflow.revision}</span>
+                  <StarButton workflow={workflow} />
                   <time
                     dateTime={new Date(workflow.updatedAt).toISOString()}
                     title={new Date(workflow.updatedAt).toLocaleString()}
@@ -423,50 +616,7 @@ export function WorkflowsPage() {
                       { month: "short", day: "numeric" },
                     )}
                   </time>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className="m4m-workflow-more"
-                        aria-label={`Actions for ${workflow.name}`}
-                        disabled={pendingAction === workflow.id}
-                      >
-                        {pendingAction === workflow.id ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <MoreHorizontal size={16} />
-                        )}
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="m4m-workflow-actions-menu"
-                    >
-                      <DropdownMenuItem asChild>
-                        <Link href={`/workflows/${workflow.id}`}>
-                          <ArrowUpRight size={14} />
-                          Open workflow
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => action(workflow, "duplicate")}
-                      >
-                        <Copy size={14} />
-                        Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => download(workflow)}>
-                        <Download size={14} />
-                        Export JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="m4m-workflow-delete"
-                        onSelect={() => action(workflow, "delete")}
-                      >
-                        <Trash2 size={14} />
-                        Delete workflow
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <WorkflowActions workflow={workflow} />
                 </footer>
               </article>
             ))}
@@ -477,6 +627,7 @@ export function WorkflowsPage() {
               <tr>
                 <th scope="col">Name</th>
                 <th scope="col">Status</th>
+                <th scope="col">Category</th>
                 <th scope="col" className="m4m-workflow-step-column">
                   Steps
                 </th>
@@ -490,7 +641,7 @@ export function WorkflowsPage() {
             </thead>
             <tbody>
               {paged.map((workflow) => (
-                <tr key={workflow.id}>
+                <tr key={workflow.id} className={workflow.favorite ? "is-favorite" : ""}>
                   <td>
                     <Link
                       href={`/workflows/${workflow.id}`}
@@ -513,6 +664,24 @@ export function WorkflowsPage() {
                       {workflow.activeRevision ? "Active" : "Draft"}
                     </span>
                   </td>
+                  <td>
+                    <div className="m4m-workflow-cats">
+                      {getWorkflowCategories(workflow)
+                        .slice(0, 2)
+                        .map((cat) => (
+                          <button
+                            key={cat}
+                            className={`m4m-workflow-cat-pill ${category === cat ? "is-active" : ""}`}
+                            onClick={() => {
+                              setCategory(category === cat ? "" : cat);
+                              setPage(1);
+                            }}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                    </div>
+                  </td>
                   <td className="m4m-workflow-step-column">
                     {workflow.graph.nodes.length}
                   </td>
@@ -528,50 +697,10 @@ export function WorkflowsPage() {
                     </time>
                   </td>
                   <td>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          className="m4m-workflow-more"
-                          aria-label={`Actions for ${workflow.name}`}
-                          disabled={pendingAction === workflow.id}
-                        >
-                          {pendingAction === workflow.id ? (
-                            <Loader2 size={16} className="animate-spin" />
-                          ) : (
-                            <MoreHorizontal size={16} />
-                          )}
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="m4m-workflow-actions-menu"
-                      >
-                        <DropdownMenuItem asChild>
-                          <Link href={`/workflows/${workflow.id}`}>
-                            <ArrowUpRight size={14} />
-                            Open workflow
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => action(workflow, "duplicate")}
-                        >
-                          <Copy size={14} />
-                          Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => download(workflow)}>
-                          <Download size={14} />
-                          Export JSON
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="m4m-workflow-delete"
-                          onSelect={() => action(workflow, "delete")}
-                        >
-                          <Trash2 size={14} />
-                          Delete workflow
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <StarButton workflow={workflow} />
+                      <WorkflowActions workflow={workflow} />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -581,22 +710,27 @@ export function WorkflowsPage() {
           <div className="m4m-workflows-empty">
             <WorkflowIcon size={24} />
             <h2>
-              {query || filter !== "all"
+              {query || filter !== "all" || category
                 ? "No matching workflows"
                 : "No workflows yet"}
             </h2>
             <p>
-              {query || filter !== "all"
-                ? "Try a different search or filter."
-                : "Create a workflow or import an existing one."}
+              {filter === "favorites"
+                ? "Star a workflow to add it to your favorites."
+                : category
+                  ? `No workflows use the "${category}" integration.`
+                  : query || filter !== "all"
+                    ? "Try a different search or filter."
+                    : "Create a workflow or import an existing one."}
             </p>
-            {query || filter !== "all" ? (
+            {query || filter !== "all" || category ? (
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => {
                   setSearch("");
                   setFilter("all");
+                  setCategory("");
                 }}
               >
                 Clear filters
@@ -623,6 +757,7 @@ export function WorkflowsPage() {
         <footer className="m4m-workflows-footer">
           <span>
             {visible.length} of {workflows.length} workflows
+            {category && ` · filtered by ${category}`}
           </span>
           <span
             className={`m4m-workflows-worker ${data.workerOnline ? "is-online" : ""}`}

@@ -49,6 +49,7 @@ function setup(
     description: "",
     revision: 1,
     activeRevision: 1,
+    favorite: false,
     graph,
     createdAt: 1,
     updatedAt: 1,

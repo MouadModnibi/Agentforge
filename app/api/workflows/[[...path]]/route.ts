@@ -83,6 +83,13 @@ export const POST = withUser(async function POST(
           }),
           201,
         );
+      case "favorite": {
+        const { value } = z
+          .object({ value: z.boolean() })
+          .parse(await body(request));
+        await workflowStore.toggleFavorite(w.id, value);
+        return ok({ favorite: value });
+      }
       case "restore": {
         const { revision } = z
           .object({ revision: z.number().int().positive() })
