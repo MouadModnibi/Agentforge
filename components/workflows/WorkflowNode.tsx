@@ -18,10 +18,12 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { catalog, isTrigger, outputHandles } from "@/lib/workflows/catalog";
+import { brandedIcons } from "./NodeIcons";
 import type {
   WorkflowNode as DomainNode,
   NodeRun,
 } from "@/lib/workflows/schema";
+
 export const icons = {
   play: Play,
   webhook: Webhook,
@@ -35,18 +37,24 @@ export const icons = {
   mail: Mail,
   message: MessageSquare,
 };
+
 export type CanvasNode = Node<
   { node: DomainNode; status?: NodeRun["status"] },
   "workflow"
 >;
+
 export const WorkflowNode = memo(function WorkflowNode({
   data,
   selected,
 }: NodeProps<CanvasNode>) {
   const node = data.node,
     def = catalog[node.kind],
-    Icon = icons[def.icon as keyof typeof icons],
     handles = outputHandles(node);
+
+  // Prefer a branded logo; fall back to the lucide icon from the catalog
+  const BrandedIcon = brandedIcons[node.kind];
+  const FallbackIcon = icons[def.icon as keyof typeof icons];
+
   return (
     <div
       className={`wf-node ${selected ? "is-selected" : ""} ${data.status ? "status-" + data.status : ""}`}
@@ -56,7 +64,11 @@ export const WorkflowNode = memo(function WorkflowNode({
         <Handle type="target" position={Position.Left} id="in" />
       )}
       <div className="wf-node-tile">
-        <Icon size={22} strokeWidth={1.6} />
+        {BrandedIcon ? (
+          <BrandedIcon size={24} className="wf-node-logo" />
+        ) : (
+          <FallbackIcon size={22} strokeWidth={1.6} />
+        )}
         <span className="wf-node-indicator">
           {data.status === "running" ? (
             <Loader2 size={12} className="animate-spin" />

@@ -4,6 +4,7 @@ import { ArrowUpRight, ChevronRight, Search, Plus, X } from "lucide-react";
 import { catalog } from "@/lib/workflows/catalog";
 import { nodeKinds, type NodeKind } from "@/lib/workflows/schema";
 import { icons } from "./WorkflowNode";
+import { brandedIcons } from "./NodeIcons";
 export function NodeLibrary({ onAdd }: { onAdd: (kind: NodeKind) => void }) {
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState("All");
@@ -88,8 +89,9 @@ export function NodeLibrary({ onAdd }: { onAdd: (kind: NodeKind) => void }) {
               <span>{kinds.length}</span>
             </h3>
             {kinds.map((kind) => {
-              const definition = catalog[kind],
-                Icon = icons[definition.icon as keyof typeof icons];
+              const definition = catalog[kind];
+              const BrandedIcon = brandedIcons[kind];
+              const FallbackIcon = icons[definition.icon as keyof typeof icons];
               return (
                 <button
                   key={kind}
@@ -110,7 +112,11 @@ export function NodeLibrary({ onAdd }: { onAdd: (kind: NodeKind) => void }) {
                       } as React.CSSProperties
                     }
                   >
-                    <Icon size={19} />
+                    {BrandedIcon ? (
+                      <BrandedIcon size={19} />
+                    ) : (
+                      <FallbackIcon size={19} />
+                    )}
                   </span>
                   <div>
                     <strong>{definition.name}</strong>

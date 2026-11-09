@@ -1423,3 +1423,90 @@
     padding: 6px;
   }
 }
+
+/* ─── Node animations ──────────────────────────────────────────────────────── */
+
+/* Pop-in entrance: every node scales up from 92% with a gentle overshoot */
+@keyframes wf-node-enter {
+  0%   { opacity: 0; transform: scale(0.92) translateY(4px); }
+  60%  { opacity: 1; transform: scale(1.03) translateY(-1px); }
+  100% { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.wf-node {
+  animation: wf-node-enter 220ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+/* Suppress the entrance animation when a node is being dragged */
+.react-flow__node.dragging .wf-node {
+  animation: none;
+}
+
+/* Running state: a soft amber glow pulse on the border */
+@keyframes wf-node-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 #c9a47230, 0 3px 0 #0003; }
+  50%       { box-shadow: 0 0 0 5px #c9a47218, 0 3px 0 #0003; }
+}
+
+.wf-node.status-running {
+  animation: wf-node-pulse 1.6s ease-in-out infinite;
+}
+
+/* Succeeded: a brief green flash then settle */
+@keyframes wf-node-succeed {
+  0%   { box-shadow: 0 0 0 0  #62917460; }
+  40%  { box-shadow: 0 0 0 8px #62917420; }
+  100% { box-shadow: 0 0 0 0  #62917400; }
+}
+
+.wf-node.status-succeeded {
+  animation: wf-node-succeed 0.5s ease-out forwards;
+}
+
+/* Failed: a quick red shake */
+@keyframes wf-node-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-4px); }
+  40%       { transform: translateX(4px); }
+  60%       { transform: translateX(-3px); }
+  80%       { transform: translateX(3px); }
+}
+
+.wf-node.status-failed {
+  animation: wf-node-shake 0.4s ease-in-out forwards;
+}
+
+/* Branded logo inside the tile — no tint, let the logo speak for itself */
+.wf-node-logo {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .wf-node,
+  .wf-node.status-running,
+  .wf-node.status-succeeded,
+  .wf-node.status-failed {
+    animation: none;
+  }
+}
+
+/* ─── Library icon coloring ────────────────────────────────────────────────── */
+
+/*
+ * For nodes with a branded logo (SVG fills are baked in) we just give the
+ * wrapper a faint tinted background so it feels intentional.
+ * For fallback lucide icons we colorize via --library-color.
+ */
+.wf-library-node-icon {
+  color: var(--library-color, #b9b9b9);
+  background: color-mix(in srgb, var(--library-color, #3a3a3a) 12%, #1e1e1e);
+  border-color: color-mix(in srgb, var(--library-color, #3a3a3a) 25%, #2a2a2a);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.wf-library-node:hover .wf-library-node-icon {
+  background: color-mix(in srgb, var(--library-color, #3a3a3a) 20%, #232323);
+  border-color: color-mix(in srgb, var(--library-color, #555) 45%, #333);
+}
