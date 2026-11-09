@@ -120,7 +120,7 @@ export const catalog: Record<NodeKind, NodeDefinition> = {
       { key: "prompt", label: "Prompt" },
     ],
     defaults: {
-      model: "gemini-3.8-flash",
+      model: "gemini-2.5-flash-preview-05-20",
       prompt: "Summarize: {{input.text}}",
     },
     outputs: ["out"],

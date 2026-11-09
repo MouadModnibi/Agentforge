@@ -29,7 +29,7 @@ export const CustomToolSchema = z.object({
 });
 
 export const AgentConfigSchema = z.object({
-  model: z.string().default("gemini-3.5-flash-lite"),
+  model: z.string().default("gemini-2.5-flash-preview-05-20"),
   temperature: z.number().min(0).max(2).default(0.7),
   maxTokens: z.number().int().min(1).max(8192).default(2048),
   systemPrompt: z.string().default(""),

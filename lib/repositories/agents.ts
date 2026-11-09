@@ -95,7 +95,7 @@ export const agentsRepository = {
     const now = Date.now();
     const id = uuidv4();
     const defaultConfig: AgentConfig = {
-      model: process.env.GEMINI_DEFAULT_MODEL || "gemini-3.5-flash-lite",
+      model: process.env.GEMINI_DEFAULT_MODEL || "gemini-2.5-flash-preview-05-20",
       temperature: 0.7,
       maxTokens: 2048,
       systemPrompt: "",

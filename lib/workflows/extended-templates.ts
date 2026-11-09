@@ -36,7 +36,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
       n("start", "manual", "Start content run", 40, 180),
       t("settings", "Content settings", 300, 180, { topic: "{{input.topic}}", tone: "{{input.tone}}", wordCount: 600 }),
       n("write", "gemini", "Write blog post", 580, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Write a {{nodes.settings.wordCount}}-word blog post about: {{nodes.settings.topic}}.\nTone: {{nodes.settings.tone}}.\nStructure: catchy title, intro paragraph, 3 main sections with subheadings, and a call-to-action. Return plain text.",
       }),
       t("result", "Package post", 860, 180, { title: "Draft ready", content: "{{nodes.write}}", topic: "{{nodes.settings.topic}}" }),
@@ -145,7 +145,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
       n("start", "emailTrigger", "New email arrives", 40, 180, { credentialId: "", mailbox: "INBOX" }),
       t("extract", "Extract email fields", 300, 180, { from: "{{trigger.from}}", subject: "{{trigger.subject}}", body: "{{trigger.text}}" }),
       n("draft", "gemini", "Draft a reply", 580, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "You are a professional assistant. Draft a polite, concise reply to this email.\nFrom: {{nodes.extract.from}}\nSubject: {{nodes.extract.subject}}\nMessage: {{nodes.extract.body}}\n\nReturn only the reply text. Do not include a subject line.",
       }),
       t("result", "Save draft for review", 860, 180, {
@@ -169,7 +169,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
       n("start", "manual", "Trigger post run", 40, 180),
       t("cfg", "Post settings", 300, 180, { topic: "{{input.topic}}", maxChars: 270 }),
       n("write", "gemini", "Write X post", 560, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Write a single punchy X (Twitter) post about: {{nodes.cfg.topic}}. Max {{nodes.cfg.maxChars}} characters. No hashtags spam. Use a strong hook. Return only the post text.",
       }),
       t("prep", "Prepare post", 820, 180, { text: "{{nodes.write}}" }),
@@ -218,7 +218,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
       n("start", "manual", "Start LinkedIn post", 40, 180),
       t("cfg", "Post config", 300, 180, { topic: "{{input.topic}}" }),
       n("write", "gemini", "Write LinkedIn post", 560, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Write a professional LinkedIn post about: {{nodes.cfg.topic}}. 150-200 words. Use a strong opening line, share a genuine insight, and end with a question to drive engagement. No excessive hashtags. Return only the post text.",
       }),
       t("prep", "Prepare post", 820, 180, { text: "{{nodes.write}}" }),
@@ -290,7 +290,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
       t("cfg", "Briefing settings — edit me", 300, 180, { recipient: "you@example.com", feedUrl: "https://feeds.feedburner.com/oreilly/radar/atom" }),
       n("fetch", "rss", "Fetch AI news feed", 560, 180, { url: "{{nodes.cfg.feedUrl}}", maxItems: 8 }),
       n("summarize", "gemini", "Summarize news items", 820, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Summarize these RSS feed items into a clean daily briefing. For each item include: title (bold), one-sentence summary, and the link. Keep it concise. Format as plain text.\n\nItems:\n{{nodes.fetch}}",
       }),
       t("email-body", "Compose email", 1080, 180, {
@@ -320,7 +320,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
         ],
       }),
       n("classify", "gemini", "Classify sentiment", 320, 180, {
-        model: "gemini-3.5-flash-lite",
+        model: "gemini-2.0-flash-lite",
         prompt: "Classify this customer feedback as exactly one word: positive, negative, or neutral.\nFeedback: {{trigger.feedback}}\nReturn only the single word.",
       }),
       t("prep", "Prepare routing data", 600, 180, {
@@ -435,7 +435,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
         ],
       }),
       n("summarize", "gemini", "Summarize and extract actions", 320, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Summarize these meeting notes and extract action items.\n\nMeeting: {{trigger.meetingTitle}}\nDate: {{trigger.date}}\nNotes: {{trigger.notes}}\n\nReturn:\n1. Summary (2-3 sentences)\n2. Action Items (bullet list with owner and deadline if mentioned)",
       }),
       t("result", "Save summary", 600, 180, {
@@ -523,7 +523,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
         ],
       }),
       n("review", "gemini", "Review code", 320, 180, {
-        model: "gemini-2.5-pro",
+        model: "gemini-2.5-pro-preview-06-05",
         prompt: "Review this {{trigger.language}} code and provide:\n1. Summary of what it does\n2. Bugs or errors found\n3. Security issues (especially injection vulnerabilities)\n4. Style and best practice suggestions\n5. Improved version\n\nContext: {{trigger.context}}\n\nCode:\n```\n{{trigger.code}}\n```",
       }),
       t("result", "Save review", 600, 180, {
@@ -574,11 +574,11 @@ export const extendedTemplates: WorkflowTemplate[] = [
       n("start", "manual", "Start cross-post", 40, 180),
       t("cfg", "Post settings", 300, 180, { topic: "{{input.topic}}" }),
       n("x-write", "gemini", "Write X post (≤280 chars)", 560, 80, {
-        model: "gemini-3.5-flash-lite",
+        model: "gemini-2.0-flash-lite",
         prompt: "Write a punchy X/Twitter post about: {{nodes.cfg.topic}}. Max 270 characters. Strong hook, no hashtag spam. Return only the text.",
       }),
       n("li-write", "gemini", "Write LinkedIn post", 560, 280, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Write a professional LinkedIn post about: {{nodes.cfg.topic}}. 120-150 words. Professional tone, end with engagement question. Return only the text.",
       }),
       n("post-x", "x", "Publish to X", 840, 80, { credentialId: "", text: "{{nodes.x-write}}" }),
@@ -610,7 +610,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
         ],
       }),
       n("generate", "gemini", "Generate FAQ", 320, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Generate {{trigger.count || 10}} FAQ items for this product:\n\nProduct: {{trigger.product}}\nAudience: {{trigger.audience}}\n\nFormat as:\nQ: [question]\nA: [answer]\n\nCover: pricing, features, setup, support, security, and common objections.",
       }),
       t("result", "Package FAQ", 600, 180, {
@@ -668,7 +668,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
         ],
       }),
       n("write", "gemini", "Write product description", 320, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Write a compelling e-commerce product description for:\n\nProduct: {{trigger.name}}\nCategory: {{trigger.category}}\nFeatures: {{trigger.features}}\nPrice: {{trigger.price}}\nTone: {{trigger.tone || 'friendly'}}\n\nInclude: catchy headline, 2-sentence intro, 4-5 bullet benefits, a closing CTA. Return plain text.",
       }),
       t("result", "Save description", 600, 180, {
@@ -726,7 +726,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
         ],
       }),
       n("screen", "gemini", "Screen resume", 320, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Screen this resume for the given job. Return:\n1. Fit score (1-10)\n2. Matched requirements\n3. Missing requirements\n4. Recommendation (strong yes / yes / maybe / no)\n5. One-paragraph summary\n\nRole: {{trigger.role}}\nJob description: {{trigger.jobDescription}}\nResume: {{trigger.resume}}",
       }),
       t("result", "Save screening result", 600, 180, {
@@ -783,7 +783,7 @@ export const extendedTemplates: WorkflowTemplate[] = [
         ],
       }),
       n("write", "gemini", "Write cover letter", 320, 180, {
-        model: "gemini-3.5-flash",
+        model: "gemini-2.0-flash",
         prompt: "Write a compelling cover letter for this job application.\n\nApplicant: {{trigger.name}}\nBackground: {{trigger.experience}}\nCompany: {{trigger.company}}\nTone: {{trigger.tone || 'professional'}}\nJob description: {{trigger.jobDescription}}\n\nThe letter should: open strong, show genuine interest in the company, highlight 2-3 most relevant experiences, and close with a clear CTA. Max 300 words. Return only the letter.",
       }),
       t("result", "Save cover letter", 600, 180, {
