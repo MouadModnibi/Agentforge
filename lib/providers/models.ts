@@ -13,9 +13,9 @@ export interface ModelDefinition {
 
 export const GEMINI_MODELS: ModelDefinition[] = [
   {
-    id: "gemini-2.5-flash-preview-05-20",
-    name: "Gemini 2.5 Flash",
-    description: "Latest and fastest. Best for most tasks. Recommended default.",
+    id: "gemini-3.8-flash",
+    name: "Gemini 3.8 Flash",
+    description: "Latest and most intelligent Flash model. Best for most tasks. Recommended default.",
     capabilities: {
       supportsToolsWithStructuredOutput: true,
       supportsStreaming: true,
@@ -23,19 +23,9 @@ export const GEMINI_MODELS: ModelDefinition[] = [
     },
   },
   {
-    id: "gemini-2.5-pro-preview-06-05",
-    name: "Gemini 2.5 Pro",
-    description: "Most powerful reasoning and coding. Use for complex tasks.",
-    capabilities: {
-      supportsToolsWithStructuredOutput: true,
-      supportsStreaming: true,
-      contextWindow: 2097152,
-    },
-  },
-  {
-    id: "gemini-2.0-flash",
-    name: "Gemini 2.0 Flash",
-    description: "Fast and capable. Good balance of speed and quality.",
+    id: "gemini-3.5-flash",
+    name: "Gemini 3.5 Flash",
+    description: "Fast and capable. Near-Pro intelligence at Flash speed and cost.",
     capabilities: {
       supportsToolsWithStructuredOutput: true,
       supportsStreaming: true,
@@ -43,8 +33,8 @@ export const GEMINI_MODELS: ModelDefinition[] = [
     },
   },
   {
-    id: "gemini-2.0-flash-lite",
-    name: "Gemini 2.0 Flash-Lite",
+    id: "gemini-3.1-flash-lite",
+    name: "Gemini 3.1 Flash-Lite",
     description: "Fastest and cheapest. Best for high-volume simple tasks.",
     capabilities: {
       supportsToolsWithStructuredOutput: false,
@@ -53,9 +43,9 @@ export const GEMINI_MODELS: ModelDefinition[] = [
     },
   },
   {
-    id: "gemini-1.5-flash",
-    name: "Gemini 1.5 Flash",
-    description: "Stable previous generation. Wide availability.",
+    id: "gemini-2.5-flash",
+    name: "Gemini 2.5 Flash",
+    description: "Stable previous generation Flash. Widely available.",
     capabilities: {
       supportsToolsWithStructuredOutput: true,
       supportsStreaming: true,
@@ -63,9 +53,9 @@ export const GEMINI_MODELS: ModelDefinition[] = [
     },
   },
   {
-    id: "gemini-1.5-pro",
-    name: "Gemini 1.5 Pro",
-    description: "Stable previous generation Pro. Large context window.",
+    id: "gemini-2.5-pro",
+    name: "Gemini 2.5 Pro",
+    description: "Previous generation Pro. Strongest reasoning and coding.",
     capabilities: {
       supportsToolsWithStructuredOutput: true,
       supportsStreaming: true,
@@ -79,6 +69,6 @@ export function getModel(id: string): ModelDefinition | undefined {
 }
 
 export function getDefaultModel(): ModelDefinition {
-  const defaultId = process.env.GEMINI_DEFAULT_MODEL || "gemini-2.5-flash-preview-05-20";
+  const defaultId = process.env.GEMINI_DEFAULT_MODEL || "gemini-3.8-flash";
   return getModel(defaultId) ?? GEMINI_MODELS[0];
 }

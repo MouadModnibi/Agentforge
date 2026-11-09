@@ -61,7 +61,7 @@ export function GeneralTab({
       <div className="space-y-2">
         <Label htmlFor="agent-model">Model</Label>
         <Select
-          value={config?.model || "gemini-2.5-flash-preview-05-20"}
+          value={config?.model || "gemini-3.8-flash"}
           onValueChange={(v) => onConfigChange({ model: v })}
         >
           <SelectTrigger id="agent-model" aria-label="Model">
